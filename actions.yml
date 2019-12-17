@@ -1,0 +1,13 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: "Build"
+      run: cargo build --verbose
+    - name: "Test"
+      run: cargo test --verbose
+    - name: "Run"
+      run: cargo run
