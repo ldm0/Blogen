@@ -5,7 +5,7 @@ html {
     */
 }
 
-.widget_plate {
+#widget_plate {
     position: fixed;
     top: 10%;
     padding: 10px;
@@ -21,7 +21,6 @@ html {
     padding: 3px 0;
     position: relative;
 }
-
 .widget>a {
     position: absolute;
     display: block;
@@ -31,16 +30,6 @@ html {
     border-radius: 50%;
     border: 2px solid black;
 }
-
-#widget_fun>a {
-    background-color: #FFFFFFFF;
-    transition: .4s ease-in;
-}
-
-#widget_fun>a:hover {
-    background-color: #FFFFFF00;
-}
-
 .widget>a>img {
     position: absolute;
     display: block;
@@ -48,7 +37,6 @@ html {
     height: 40px;
     margin: 12px;
 }
-
 .widget>canvas {
     position: absolute;
     width: 64px;
@@ -58,6 +46,14 @@ html {
      *  and canvas start to refreshing
      */
     z-index: -1;
+}
+
+#widget_fun>a {
+    background-color: #FFFFFFFF;
+    transition: .4s ease-in;
+}
+#widget_fun>a:hover {
+    background-color: #FFFFFF00;
 }
 
 ::-webkit-scrollbar {

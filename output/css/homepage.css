@@ -48,7 +48,7 @@
 .blog_chunk_title>a:hover,
 .blog_chunk_title>a:focus,
 .blog_chunk_title>a:active {
-    display: inline-block;  /* for after */
+    display: inline-block;
     color: #000000;
     text-decoration: none;
 }
