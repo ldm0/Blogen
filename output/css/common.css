@@ -1,0 +1,78 @@
+html {
+    font-family: Georgia, "Microsoft YaHei", Arial, Helvetica, sans-serif;
+    /*
+    font-size: 16px;
+    */
+}
+
+.widget_plate {
+    position: fixed;
+    top: 10%;
+    padding: 10px;
+    /*
+    width: 64px + 20px;
+    height: 100%;
+    */
+}
+
+.widget {
+    width: 64px;
+    height: 70px;
+    padding: 3px 0;
+    position: relative;
+}
+
+.widget>a {
+    position: absolute;
+    display: block;
+    width: 64px;
+    height: 64px;
+    margin: -2px;
+    border-radius: 50%;
+    border: 2px solid black;
+}
+
+#widget_fun>a {
+    background-color: #FFFFFFFF;
+    transition: .4s ease-in;
+}
+
+#widget_fun>a:hover {
+    background-color: #FFFFFF00;
+}
+
+.widget>a>img {
+    position: absolute;
+    display: block;
+    width: 40px;
+    height: 40px;
+    margin: 12px;
+}
+
+.widget>canvas {
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    /** canvas at bottom and covered by other things 
+     *  when hover, top cover turns into transparent 
+     *  and canvas start to refreshing
+     */
+    z-index: -1;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #FFFFFF7f;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background: #3F3F3F7F;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #0000007F;
+}

@@ -1,0 +1,90 @@
+ 
+<!--!! remember to remove . in each path before pushing to web-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ldm0's Blog</title>
+        <link rel="shortcut icon" type="image/x-icon" href="./assets/favicon.ico">
+        <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
+        <link rel="stylesheet" type="text/css" href="./css/common.css">
+        <link rel="stylesheet" type="text/css" href="./css/homepage.css">
+        <script defer src="./js/widget_fun.js"></script>
+    </head>
+    <body>
+        <!--use div with image currently, will change to opacity canvas in the future-->
+        <div class="widget_plate">
+            <div class="widget" id="widget_home_page">
+                <a href="./index.html">
+                    <img src="./assets/homepage.png" alt="homepage">
+                </a>
+            </div>
+            <div class="widget" id="widget_blog_cluster">
+                <!--blogs clustered by different tags-->
+                <a href="./cluster.html">
+                    <img src="./assets/cluster.png" alt="cluster">
+                </a>
+            </div>
+            <div class="widget" id="widget_fun">
+                <!--some fun demo-->
+                <a href="./fun.html">
+                    <img src="./assets/fun.png" alt="fun">
+                </a>
+                <canvas id="widget_fun_canvas"></canvas>
+            </div>
+            <!--unused widgets(not useful so currently not implemented):-->
+            <!--
+            <div class="widget_github"> </div>
+            <div class="widget_blog_before"> </div>
+            <div class="widget_blog_after"> </div>
+            <div class="widget_blog_random"> </div>
+            -->
+        </div>
+        <div class="blog">
+            <!--Blog chunks usually sorted with timeline.-->
+            <!--Blog chunks below should be generated with generator.-->
+            
+            <div class="blog_chunk">
+                <div class="blog_chunk_left">
+                    <div class="blog_chunk_title">
+                        <a href="articles/is-it-working.html">Is it working?</a>
+                    </div>
+                    <div class="blog_chunk_preview">
+                        First Blog<br>
+                    </div>
+                </div>
+                <div class="blog_chunk_right">
+                    <div class="blog_chunk_tags"> 
+                        <div class="blog_chunk_tag">Life</div>
+                        <div class="blog_chunk_tag">Programming</div> 
+                    </div>
+                </div>
+            </div>
+
+            <div class="blog_chunk">
+                <div class="blog_chunk_left">
+                    <div class="blog_chunk_title">
+                        <a href="articles/markdown-compatibility-test.html">Markdown Compatibility Test</a>
+                    </div>
+                    <div class="blog_chunk_preview">
+                        This blog is mainly used to test markdown and trivial things like emoji and Unicode 😎<br>
+                    </div>
+                </div>
+                <div class="blog_chunk_right">
+                    <div class="blog_chunk_tags"> 
+                        <div class="blog_chunk_tag">Life</div>
+                        <div class="blog_chunk_tag">Programming</div> 
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div id="tail">
+            <div id="tail_github">
+                <a href="https://github.com/ldm0">Github</a>
+            </div>
+            <div id="tail_email">
+                <a href=mailto:ldm2993593805@163.com>Email</a>
+            </div>
+        </div>
+    </body>
+</html>

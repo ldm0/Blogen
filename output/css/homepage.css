@@ -1,0 +1,159 @@
+.blog {
+    padding: 10px 0px 0px 20%;
+    /*
+    border: 1px solid;
+    position: fixed;
+    left: 60px;
+    */
+}
+
+.blog_chunk {
+    padding: 10px;
+    border-radius: 6px;
+    /*
+    transition: .2s ease-in;
+    border: 1px solid;
+    margin: 10px;
+    */
+}
+.blog_chunk:hover {
+    /*
+    Don't know why box-shadow is a bit ugly to me -_-b
+    so just stop using it.
+    */
+    /*
+    box-shadow: 0 0 8px #0000003f;
+    */
+}
+
+.blog_chunk_left {
+    display: inline-block;
+    vertical-align: top;
+    width: 60%;
+    max-width: 600px;
+}
+
+.blog_chunk_title {
+    font-size: 30px;
+    padding: 5px 0px;
+    /*
+    transition: 0.382s ease-in;
+    border: 1px solid;
+    */
+}
+
+.blog_chunk_title>a,
+.blog_chunk_title>a:link,
+.blog_chunk_title>a:visited,
+.blog_chunk_title>a:hover,
+.blog_chunk_title>a:focus,
+.blog_chunk_title>a:active {
+    display: inline-block;  /* for after */
+    color: #000000;
+    text-decoration: none;
+}
+.blog_chunk_title>a::before {
+    content: '';
+    width: 0px;
+    height: 1px;
+    display: block;
+    background: #000000;
+    transition: 0.4s ease-in-out;
+}
+.blog_chunk_title>a:hover::before,
+.blog_chunk_title>a:hover::before {
+    width: 100%;
+}
+.blog_chunk_title>a::after {
+    content: '';
+    width: 0px;
+    height: 1px;
+    display: block;
+    background: #000000;
+    transition: 0.3s ease-in-out; /* slightly faster than before element */
+}
+.blog_chunk_title>a:hover::after,
+.blog_chunk_title>a:active::after {
+    width: 100%;
+}
+
+.blog_chunk_preview {
+    font-size: 15px;
+    color: #7f7f7f;
+    /*
+    border: 1px solid;
+    */
+}
+
+.blog_chunk_right {
+    display: inline-block;
+    vertical-align: top;
+    /*
+    width: 30%;
+    */
+}
+
+.blog_chunk_tags {
+    font-size: 15px;
+    color: #7f7f7f;
+    /*
+    border: 1px solid;
+    */
+}
+
+.blog_chunk_tag {
+    margin: 3px;
+    /*
+    display: inline-block;
+    */
+}
+.blog_chunk_tag::before {
+    content: '|';
+    color: black;
+    /*
+    width: 3px;
+    height: 16px;
+    display: inline-block;
+    vertical-align: bottom;
+    background: #8f8f8f;
+    */
+}
+
+#tail {
+    width: 100%;
+    text-align: center;
+}
+#tail>div {
+    display: inline-block;
+}
+#tail>div:not(:last-child)::after {
+    content: '|';
+}
+
+#tail_github>a,
+#tail_github>a:link,
+#tail_github>a:visited {
+    color: #000000;
+    text-decoration: none;
+    border-radius: 0px;
+    transition: 0.4s;
+}
+#tail_github>a:hover,
+#tail_github>a:active {
+    color: #000000;
+    box-shadow: 0 3px 0px #00007f;
+}
+
+#tail_email>a,
+#tail_email>a:link,
+#tail_email>a:visited {
+    color: #000000;
+    text-decoration: none;
+    border-radius: 0px;
+    transition: 0.4s;
+}
+#tail_email>a:hover,
+#tail_email>a:active {
+    color: #000000;
+    box-shadow: 0 3px 0px #00007f;
+}
