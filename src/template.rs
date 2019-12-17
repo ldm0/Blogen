@@ -203,16 +203,3 @@ impl HTMLTemplate for HomepageTemplate {
         vec![("index.html".to_string(), result)]
     }
 }
-
-impl ClusterTemplate {
-
-}
-
-impl BlogTemplate {
-
-}
-
-impl HomepageTemplate {
-
-}
-
