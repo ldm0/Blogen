@@ -1,0 +1,37 @@
+#blog {
+    margin: 10px 20% 10px 20%;
+}
+
+#blog_title {
+    font-size: 30px;
+    text-align: center;
+}
+
+#blog_time {
+    font-size: 12px;
+    text-align: center;
+    padding: 5px;
+}
+
+#blog_preview {
+    color: #7f7f7f;
+    background-color: #efefef;
+    padding: 5px 10px;
+}
+
+#blog_content {
+    padding: 10px 5%;
+}
+
+#blog_tags {
+    text-align: center;
+}
+
+.tag {
+    display: inline-block;
+    color: #7f7f7f;
+}
+
+.tag:not(:last-child)::after {
+    content: ' | ';
+}

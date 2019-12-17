@@ -79,33 +79,42 @@ impl HTMLTemplate for BlogTemplate {
         let mut results = Vec::new();
 
         // We have the knowledge of blog template's structure
-        let main = self.hlfs.get("main").expect("there should be a main symbol in blog template.");
-        let tag_names = match main.get(1).unwrap() {
+        let main_rhs = self.hlfs.get("main").expect("there should be a main symbol in blog template.");
+        let tags_rhs = match main_rhs.get(1).unwrap() {
             Symbol::N(x) => self.hlfs.get(x).expect(&format!("\"{}\" symbol not found.", x)),
             _ => panic!(),
         };
-        let tag_name = match tag_names.get(1).unwrap() {
+        let tag_rhs = match tags_rhs.get(1).unwrap() {
             Symbol::N(x) => self.hlfs.get(x).expect(&format!("\"{}\" symbol not found.", x)),
             _ => panic!(),
         };
-        assert_eq!(main.len(), 3);
-        assert_eq!(tag_names.len(), 3);
-        assert_eq!(tag_name.len(), 1);
+        assert_eq!(main_rhs.len(), 3);
+        assert_eq!(tags_rhs.len(), 3);
+        assert_eq!(tag_rhs.len(), 1);
 
         let blogs = cluster.get_blogs();
         for blog in blogs {
             let mut result = String::new();
-            match main.get(0).unwrap() {
-                Symbol::T(x) => result.push_str(x),
+            match main_rhs.get(0).unwrap() {
+                Symbol::T(x) => {
+                    let options = ComrakOptions::default();
+                    let content = markdown_to_html(&blog.content, &options);
+                    result.push_str(&x.replace("_slot_of_blog_title", &blog.title)
+                                      .replace("_slot_of_blog_day", &blog.day.to_string())
+                                      .replace("_slot_of_blog_month", &blog.month.to_string())
+                                      .replace("_slot_of_blog_year", &blog.year.to_string())
+                                      .replace("_slot_of_blog_preview", &blog.preview)
+                                      .replace("_slot_of_blog_content", &content));
+                }
                 _ => panic!(),
             }; 
-            match tag_names.get(0).unwrap() {
+            match tags_rhs.get(0).unwrap() {
                 Symbol::T(x) => result.push_str(x),
                 _ => panic!(),
             }; 
             // add multiple tag names
             for tag_handle in blog.tags.iter() {
-                match tag_name.get(0).unwrap() {
+                match tag_rhs.get(0).unwrap() {
                     Symbol::T(x) => {
                         let tag = cluster.get_tag(*tag_handle).unwrap();
                         result.push_str(&x.replace("_slot_of_tag_name", &tag.name));
@@ -113,20 +122,12 @@ impl HTMLTemplate for BlogTemplate {
                     _ => panic!(),
                 }; 
             }
-            match tag_names.get(2).unwrap() {
+            match tags_rhs.get(2).unwrap() {
                 Symbol::T(x) => result.push_str(x),
                 _ => panic!(),
             }; 
-            match main.get(2).unwrap() {
-                Symbol::T(x) => {
-                    let options = ComrakOptions::default();
-                    let content = markdown_to_html(&blog.content, &options);
-                    result.push_str(&x.replace("_slot_of_day", &blog.day.to_string())
-                                      .replace("_slot_of_month", &blog.month.to_string())
-                                      .replace("_slot_of_year", &blog.year.to_string())
-                                      .replace("_slot_of_preview", &blog.preview)
-                                      .replace("_slot_of_content", &content));
-                },
+            match main_rhs.get(2).unwrap() {
+                Symbol::T(x) => result.push_str(x),
                 _ => panic!(),
             }
             results.push((format!("{}{}", &path_title(&blog.title), ".html"), result));
