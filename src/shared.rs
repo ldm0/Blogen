@@ -14,7 +14,7 @@ macro_rules! BLOG_PATH {
 
 #[macro_export]
 macro_rules! BLOG_FOLDER {
-    () => {"articles/"};
+    () => {""};
     ($x:literal) => {concat!(BLOG_FOLDER!(), $x)};
     ($x:expr) => {BLOG_FOLDER!().to_string() + $x};
 }
