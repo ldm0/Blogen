@@ -41,8 +41,11 @@ pub fn path_title(title: &str) -> String {
     let mut path_title = String::new();
     for i in title.trim().to_ascii_lowercase().replace(" ", "-").chars() {
         match i {
-            '-' | '0'..='9' | 'a'..='z' => path_title.push(i),
-            _ => (),
+            '~' | '!' | '@' | '#' | '$' | '%' | '^' | '&' | '*' | '(' | ')' |
+            '{' | '}' | '|' | ':' | '"' | '<' | '>' | '?' |
+            '[' | ']' | '\\' | ';' | '\'' | ',' | '.' | '/' |
+            '=' => (),
+            _ => path_title.push(i),
         }
     }
     path_title
@@ -57,5 +60,7 @@ mod shared_tests {
         assert_eq!("this-is-the-title", path_title("\n    This iS The tiTle  \n"));
         assert_eq!("this-is-the-title666", path_title("This iS The tiTle666"));
         assert_eq!("this-is-the-title", path_title("\n   *!@#$%^&*()This iS The <>?,./;'[]\\tiTle  \n"));
+        assert_eq!("中文测试", path_title("中文测试"));
+        assert_eq!("烫烫烫", path_title("烫烫烫"));
     }
 }
