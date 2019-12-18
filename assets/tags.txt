@@ -1,10 +1,14 @@
+Rust
+I am a rustcean!
 Math
-Things about math, I love it.
+I love using math tools to solve problems.
 Graphic
-Computer Graphics.
+Computer Graphics techniques.
 Programming
 Programming skills and knowledges.
+Computer Science
+Things about science of computer, mostly algorithm and compiler principles.
 Work
 What I devote to.
 Life
-Thoughts about life.
+Thoughts and things about life.

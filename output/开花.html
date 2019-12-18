@@ -1,0 +1,100 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>开花!</title>
+        <link rel="shortcut icon" type="image/x-icon" href="./assets/favicon.ico">
+        <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
+        <link rel="stylesheet" type="text/css" href="./css/common.css">
+        <link rel="stylesheet" type="text/css" href="./css/blog.css">
+        <script defer src="./js/widget_fun.js"></script> 
+    </head>
+    <body>
+        <div id="widget_plate">
+            <div class="widget" id="widget_home_page">
+                <a href="./index.html">
+                    <img src="./assets/homepage.png" alt="homepage">
+                </a>
+            </div>
+            <div class="widget" id="widget_blog_cluster">
+                <!--blogs clustered by different tags-->
+                <a href="./cluster.html">
+                    <img src="./assets/cluster.png" alt="cluster">
+                </a>
+            </div>
+            <div class="widget" id="widget_fun">
+                <!--some fun demo-->
+                <a href="./fun.html">
+                    <img src="./assets/fun.png" alt="fun">
+                </a>
+                <canvas id="widget_fun_canvas"></canvas>
+            </div>
+        </div>
+        <div id="blog">
+            <div id="blog_title">
+                <h2>
+                    开花!
+                </h2>
+            </div>
+            <div id="blog_time">
+                2019/12/18
+            </div>
+            <div id="blog_preview">
+                一篇helloworld-like的博客。
+            </div>
+            <div id="blog_content">
+                <h2>开头</h2>
+<p>经过一段时间的摸鱼开发，总算是把博客的生成器写完了，总算是满足了自己不使用烂大街框架搭建Blog的心愿吧 (有毒)，接下来总算有一个空间可以让我安心的写一些文章了。</p>
+<h2>我的博客生成器Blogen</h2>
+<ul>
+<li><a href="https://github.com/ldm0/blogen"><strong>Github</strong></a></li>
+</ul>
+<p>写文章是我的刚需。逛了一圈别人的博客，发现他们都做得挺好，就是缺了个性，而这正是我最看重的。</p>
+<ol>
+<li>一个网页的个性从不一样的思想或不一样的UI中来，前者我不确定是否有，那就先从后者着手开始做。</li>
+<li>不一样的界面意味着不一样的交互逻辑或者元素排列方式，这意味着要手写 HTML。</li>
+<li>真的手写HTML是不现实的，我需要一个框架在实现博客页面的自动化生成的同时也能加入个性化的元素。</li>
+<li>于是就写了Blogen。</li>
+</ol>
+<p>Blogen 是我自己的 Blog 的脚手架。提供文章的 markdown 文件和页面的模板 html 以及一些元数据，它能自动的生成博客的一系列网页。用 Rust 写只是考虑到它的 String 原生支持 UTF-8 😀，拿来做字符串处理没有太多顾虑。因为总共也没多少行代码，没有什么细讲的必要，我只分享一些在开发过程中觉得好玩的东西。</p>
+<p><strong>经常的，我们使用文法来进行模式匹配，但是实际上我发现它反过来也是一种很方便的串生成的工具。</strong></p>
+<p>网页生成最重要的就是 HTML 片段的提供。如果我们把一些 HTML 的碎片按照特定的顺序塞在一个文本文件，以供程序使用，这会让这些文件难以维护和滚动更新。如果使用文法辅助提供这些 HTML 片段可以让我更方便的进行维护。以上的说法可能不够直观，这里给一个例子。假设说我想要自动生成类似下面的一段话:</p>
+<pre><code>(Donough Liu) will go hiking with [Alice] [Bob] in &lt;2020&gt;.
+</code></pre>
+<p>其中 <code>Donough Liu</code> 是作者的名字， <code>Alice</code> 和 <code>Bob</code> 是和作者 go hiking 的朋友的名字(朋友的名字有若干个，可能不止两个)， <code>2020</code> 是 go hiking 的时间。这时会想要使用一种方式来提供约束这段话的生成的模板，我肯定不会想要这样的形式的模板:</p>
+<pre><code class="language-json">{
+    snippet0        : &quot;(&quot;,
+    slot0           : author_name,
+    snippet1        : &quot;) will go hiking with [&quot;,
+    slot1_reptitive : partner,
+    snippet2        : &quot;] [&quot;,
+    snippet3        : &quot;] in &lt;&quot;,
+    slot2           : time,
+    snippet4        : &quot;&gt;.&quot;
+}
+</code></pre>
+<p>它过于丑陋，没有可读性且难以维护。这时候如果使用文法辅助的话，我们的片段提供可以带有更多语义信息 (这里为了解释以 EBNF 形式提供):</p>
+<pre><code class="language-ebnf">main     = &quot;(&quot;, author_name, &quot;) will go hiking with &quot;, { partners }, &quot; in &quot;, time, &quot;.&quot;;
+partners = &quot;[&quot;, partner_name, &quot;]&quot;;
+extern author_name
+extern parter_name
+extern time
+</code></pre>
+<p>其中这里我们定义了一个不在 EBNF 标准里的关键词 <code>extern</code>，它的意思就是由其它模块来提供此部分的信息，这对应的博客网页生成中的就是类似于文章标题，文章时间，文章内容等等。使用文法的形式构造模板来提供代码片段有很好的可读性，很方便维护。而由于 Blogen 生成的都是 HTML ，我给它设计的生成模板语法更特殊更好玩一点，但原理大体相似，这里就不多介绍了。</p>
+<h2>博客基调</h2>
+<h3><strong>Cool | Fun</strong></h3>
+<p>我会写我掌握的酷的技术，好的作品 (估计大部分是代码作品)，好玩的想法。同时和部分人相反，我对于生活其实不太关心，感觉通常是迟钝的，记录生活没有什么意义，所以我不会写有关于生活的东西。<br />
+除了接下来新写的文章，然后我也会把之前的文章整理润色一下放上来，就这样开始吧。</p>
+
+            </div>
+            <div id="blog_tags">
+                
+
+                <div class="tag">Rust</div>
+                <div class="tag">Programming</div>
+                <div class="tag">Computer Science</div>
+
+            </div>
+        </div>
+    </body>
+</html>
