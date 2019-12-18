@@ -96,6 +96,7 @@ impl BlogClusters {
 
             // Just ignore the metadata, because we have parsed it
             parts.next().expect("where is the meta data?");
+            // Allow prefixed and trailing space and in preview and content
             // get the preview part
             let preview = parts.next().expect("where is the meta data?").trim();
             // get the content part
