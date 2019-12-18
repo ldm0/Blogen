@@ -1,8 +1,7 @@
 html {
-    font-family: Georgia, "Microsoft YaHei", Arial, Helvetica, sans-serif;
-    /*
-    font-size: 16px;
-    */
+    font-family: serif;
+    font-size: 1em;
+    line-height: 1.618em;
 }
 
 #widget_plate {

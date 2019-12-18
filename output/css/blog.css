@@ -1,26 +1,37 @@
+pre {
+    background-color: #EEE;
+    padding: 1em;
+    white-space: pre-wrap;
+    word-break: keep-all;
+}
+
+code {
+    font-family: Consolas, monospace;
+}
+
 #blog {
-    margin: 10px 20% 10px 20%;
+    margin: 10px 12% 10px 12%;
 }
 
 #blog_title {
-    font-size: 30px;
+    font-size: 2em;
     text-align: center;
 }
 
 #blog_time {
-    font-size: 12px;
+    font-size: 0.8em;
     text-align: center;
     padding: 5px;
 }
 
 #blog_preview {
-    color: #7f7f7f;
-    background-color: #efefef;
-    padding: 5px 10px;
+    color: #555;
+    background-color: #DDD;
+    padding: 1em;
 }
 
 #blog_content {
-    padding: 10px 5%;
+    padding: 0.6em 5%;
 }
 
 #blog_tags {
