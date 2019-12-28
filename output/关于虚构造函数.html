@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>关于虚构造函数</title>
+        <link rel="shortcut icon" type="image/x-icon" href="./assets/favicon.ico">
+        <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
+        <link rel="stylesheet" type="text/css" href="./css/common.css">
+        <link rel="stylesheet" type="text/css" href="./css/blog.css">
+        <script defer src="./js/widget_fun.js"></script> 
+    </head>
+    <body>
+        <div id="widget_plate">
+            <div class="widget" id="widget_home_page">
+                <a href="./index.html">
+                    <img src="./assets/homepage.png" alt="homepage">
+                </a>
+            </div>
+            <div class="widget" id="widget_blog_cluster">
+                <!--blogs clustered by different tags-->
+                <a href="./cluster.html">
+                    <img src="./assets/cluster.png" alt="cluster">
+                </a>
+            </div>
+            <div class="widget" id="widget_fun">
+                <!--some fun demo-->
+                <a href="./fun.html">
+                    <img src="./assets/fun.png" alt="fun">
+                </a>
+                <canvas id="widget_fun_canvas"></canvas>
+            </div>
+        </div>
+        <div id="blog">
+            <div id="blog_title">
+                <h2>
+                    关于虚构造函数
+                </h2>
+            </div>
+            <div id="blog_time">
+                2019/12/28
+            </div>
+            <div id="blog_preview">
+                C++ 为什么没有设计虚构造函数？为什么 Delphi 却设计了它？
+            </div>
+            <div id="blog_content">
+                <h2>引</h2>
+<p>由于某些特殊的原因，我偶然间发现 Delphi 居然支持虚构造函数，很惊讶，因为这不是一个稀松平常的语言特性。</p>
+<ul>
+<li><strong>Plan</strong>:
+<ul>
+<li>虚构造函数是什么？</li>
+<li>为什么delphi要虚构造函数？</li>
+<li>为什么C++被不支持虚构造函数？</li>
+<li>delphi虚构造函数是怎么实现的？</li>
+</ul>
+</li>
+</ul>
+<h1>什么是虚构造函数</h1>
+<p>顾名思义，虚构造函数是指类的构造函数被声明为虚函数。</p>
+<h1>为什么C++不支持虚构造函数</h1>
+<h2>是的，虚构造函数</h2>
+<p>对于大多数现代人来说，他们第一次听到这个东西会莫名其妙。众所周知，要构造一个派生类，我们肯定要有这个派生类的类型是什么的知识，这使得拿着基类类型想要去构造出一个派生类的场景不会出现，因为这种场景下编译器也不知道你想要的是哪一个派生类，这意味着语言设计虚构造函数是无意义的。
+Bjarne Stroustrup 在 <a href="http://www.stroustrup.com/bs_faq2.html#virtual-ctor">Style &amp; Technique FAQ</a> 里面也介绍了不设计这个东西的理由:</p>
+<blockquote>
+<p>A virtual call is a mechanism to get work done given partial information. In particular, &quot;virtual&quot; allows us to call a function knowing only an interfaces and not the exact type of the object. To create an object you need complete information. In particular, you need to know the exact type of what you want to create. Consequently, a &quot;call to a constructor&quot; cannot be virtual.</p>
+</blockquote>
+<p>这也是为什么C++被设计成不支持虚构造函数，因为它本身就是一个<strong>悖论</strong>。</p>
+<h1>为什么Delphi有虚构造函数</h1>
+<h2>悖论，是吗</h2>
+<p>Delphi里面有一个很好玩的东西：Class Reference。一个 Class Reference 中装着一个 class 的 type 而不是 class 的 instance，这类似于 C# 中的 TypeVariable（毕竟一脉相承-_-）。<br />
+下面一段代码演示 Delphi 中是如何使用 Class Reference 的：</p>
+<pre><code class="language-pascal">{$mode objfpc}  // directive to be used for defining classes
+{$m+}           // directive to be used for using constructor
+
+program test;
+type
+    Base = class
+    public
+        constructor Create; virtual;
+    end;
+
+    Foo = class(Base)
+    public
+        constructor Create; override;
+    end;
+
+    Bar = class(Base)
+    public
+        constructor Create; override;
+    end;
+    
+    BaseRef = class of Base; //declares a class reference type
+
+var
+    base_ref: BaseRef;
+    base_instance: Base;
+
+constructor Base.create();
+begin
+    writeln('Base was created');
+end;
+
+constructor Foo.create();
+begin
+    writeln('Foo was created');
+end;
+
+constructor Bar.create();
+begin
+    writeln('Bar was created');
+end;
+
+begin  
+   base_ref := Base;
+   base_instance := base_ref.Create; // returns a Base
+   base_ref := Foo;
+   base_instance := base_ref.Create; // returns a Foo
+   base_ref := Bar;
+   base_instance := base_ref.Create; // returns a Bar
+end.
+</code></pre>
+<p>Outputs</p>
+<pre><code>Base was created
+Foo was created
+Bar was created
+</code></pre>
+<p><a href="https://rextester.com/live/MYDX18092">→ Live Demo ←</a></p>
+<p>代码中的 base_ref 是基类的 Class Reference ，我们分别给它赋了基类的 class type (Base) 和两个派生类的 class type (Foo, Bar)。
+编译器在编译时看到 <code>base_ref.Create</code> 的时候并不知道 base_ref 当前指向的是什么 type，而是在运行时动态找到并调用想要的 class instance的构造函数，这是虚构造函数的力量。<br />
+这意味着使用Class Reference和虚构造函数，可以实现这样的效果：我们可以在运行时构造一个类，即使在编译时不知道要构造的类是哪个。这相当于在语言层面实现了Factory Pattern，算是很有用的语法了。<br />
+正是有了 Class Reference 这种神奇东西，前面的悖论得已解开，虚的构造函数才有其存在的意义。</p>
+<h1>Delphi虚构造函数是怎么实现的</h1>
+<p>首先应当看 Delphi 中 Class Reference 是怎么实现的，Delphi 中 Class Reference 也被叫做 Meta Class。它本身不是一个 Class instance，而是包含了一些指向 Class 定义的元数据（RTTI），使得使用者可以拿 Class Reference 来调用类中的虚函数。同时因为 Class Reference 有这些元数据，也可以拿它来进行运行时的类型判断，譬如说判断一个 instance 是不是给定 class 的 instance。
+虚构造函数也就是利用了 Class 中的元数据得已被调用，才有了以上的用法。</p>
+<h1>结</h1>
+<p>虚构造函数是一个语法糖，有了它我们能更漂亮的实现Factory Pattern，没有它我们也可以手动的实现，只是实现的更丑且不能热拔插新的派生类。不算太重要，你看大家用了这么久 C++ 也没怎么抱怨hhhh。</p>
+
+            </div>
+            <div id="blog_tags">
+                
+
+                <div class="tag">Programming</div>
+                <div class="tag">Computer Science</div>
+                <div class="tag">C++</div>
+                <div class="tag">Delphi</div>
+
+            </div>
+        </div>
+    </body>
+</html>

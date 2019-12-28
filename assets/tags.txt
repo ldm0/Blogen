@@ -1,5 +1,9 @@
 Rust
 I am a rustcean!
+C++
+Yeah, it's difficult.
+Delphi
+The stone age.
 Math
 I love using math tools to solve problems.
 Graphic

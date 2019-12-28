@@ -1,16 +1,5 @@
-pre {
-    background-color: #EEE;
-    padding: 1em;
-    white-space: pre-wrap;
-    word-break: keep-all;
-}
-
-code {
-    font-family: Consolas, monospace;
-}
-
 #blog {
-    margin: 10px 12% 10px 12%;
+    margin: 10em 20% 10em 20%;
 }
 
 #blog_title {
@@ -21,17 +10,45 @@ code {
 #blog_time {
     font-size: 0.8em;
     text-align: center;
-    padding: 5px;
+    padding: 0.3px;
 }
 
 #blog_preview {
     color: #555;
-    background-color: #DDD;
+    background-color: #EEE;
     padding: 1em;
 }
 
 #blog_content {
     padding: 0.6em 5%;
+}
+
+#blog_content>h1 {
+    padding: 2em 0 1em 0;
+}
+
+#blog_content>pre {
+    background-color: #EEE;
+    padding: 1em;
+    white-space: pre-wrap;
+    word-break: keep-all;
+}
+
+#blog_content>pre>code {
+    font-size: 13px;
+    font-family: Consolas, monospace;
+    line-height: 1em;
+}
+
+#blog_content>blockquote {
+    background-color: #EEE;
+    margin: 0 0 0 0;
+    padding: 0.5em 1em;
+    box-shadow: -0.3em 0px #55F;
+}
+
+#blog_content>blockquote>p {
+    margin: 0;
 }
 
 #blog_tags {
@@ -40,7 +57,7 @@ code {
 
 .tag {
     display: inline-block;
-    color: #7f7f7f;
+    color: #777;
 }
 
 .tag:not(:last-child)::after {
