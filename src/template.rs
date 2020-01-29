@@ -19,14 +19,15 @@ use crate::hlf_parser::{HLF, HlfLhs, HlfRhs, Symbol, parse};
 // The hard-coded rules could be wrote in files, which make this program data driven
 // (But it's difficult and not practicle because demand always ugly and hard to be describled in a general way).
 
-// Use a bnf like thing is a fancier expression of html snippet provider
+// Use a bnf-like thing is a fancier expression of html snippet provider
 // while symbol in content means this symbol can be repeated
 
-
-
 pub trait HTMLTemplate {
-    fn load(template_raw: &str) -> Self;
-    // file name, and file content
+    // Try to load html template from string
+    fn load(template_raw: &str) -> Result<Self, String>
+        where Self: std::marker::Sized;
+
+    // Return file name and file content
     fn fill(&self, blog_clusters: &BlogClusters) -> Vec<(String, String)>;
 }
 
@@ -43,16 +44,18 @@ pub struct HomepageTemplate {
 }
 
 impl HTMLTemplate for ClusterTemplate {
-    fn load(template_raw: &str) -> Self {
-        // if input invalid template, spits out 
-        let hlfs_vec = parse(&template_raw).expect("template parse failed");
+    fn load(template_raw: &str) -> Result<Self, String> {
+        let hlfs_vec = match parse(&template_raw) {
+            Some(x) => x,
+            None => return Err("template parse failed".to_string()),
+        };
         let mut hlfs = HashMap::new();
         for i in hlfs_vec.iter() {
             hlfs.insert(i.lhs.clone(), i.rhs.clone());
         }
-        Self {
-            hlfs: hlfs,
-        }
+        Ok(Self {
+            hlfs: hlfs
+        })
     }
     fn fill(&self, clusters: &BlogClusters) -> Vec<(String, String)> {
         let mut content = String::new();
@@ -65,15 +68,18 @@ impl HTMLTemplate for ClusterTemplate {
 }
 
 impl HTMLTemplate for BlogTemplate {
-    fn load(template_raw: &str) -> Self {
-        let hlfs_vec = parse(&template_raw).expect("template parse failed");
+    fn load(template_raw: &str) -> Result<Self, String> {
+        let hlfs_vec = match parse(&template_raw) {
+            Some(x) => x,
+            None => return Err("template parse failed".to_string()),
+        };
         let mut hlfs = HashMap::new();
         for i in hlfs_vec.iter() {
             hlfs.insert(i.lhs.clone(), i.rhs.clone());
         }
-        Self {
+        Ok(Self {
             hlfs: hlfs,
-        }
+        })
     }
     fn fill(&self, cluster: &BlogClusters) -> Vec<(String, String)> {
         let mut results = Vec::new();
@@ -137,15 +143,18 @@ impl HTMLTemplate for BlogTemplate {
 }
 
 impl HTMLTemplate for HomepageTemplate {
-    fn load(template_raw: &str) -> Self {
-        let hlfs_vec = parse(&template_raw).expect("template parse failed");
+    fn load(template_raw: &str) -> Result<Self, String> {
+        let hlfs_vec = match parse(&template_raw) {
+            Some(x) => x,
+            None => return Err("template parse failed".to_string()),
+        };
         let mut hlfs = HashMap::new();
         for i in hlfs_vec.iter() {
             hlfs.insert(i.lhs.clone(), i.rhs.clone());
         }
-        Self {
+        Ok(Self {
             hlfs: hlfs,
-        }
+        })
     }
     fn fill(&self, cluster: &BlogClusters) -> Vec<(String, String)> {
         let mut result = String::new();

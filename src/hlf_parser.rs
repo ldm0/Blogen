@@ -8,7 +8,7 @@ Use comment chunk of html for convenient HLF preview
 document := symbol content document | epsilon
 content := content symbol content | epsilon
 */
-// This parser is strict, error when possible.
+// This parser is strict, it will throw error whenever possible.
 
 use std::str::Chars;
 
@@ -31,7 +31,7 @@ impl HLF {
     pub fn new() -> Self {
         HLF {
             lhs: String::new(),
-            rhs: Vec::<Symbol>::new(),
+            rhs: Vec::new(),
         }
     }
 }
@@ -42,7 +42,8 @@ enum HlfType {
     Content,
 }
 
-// Check if input prefix with pattern
+// Check if input prefixs with pattern
+// Return end position
 fn match_str<'a, 'b>(input: &Chars<'a>, pattern: &Chars<'b>) -> Option<Chars<'a>> {
     let mut input = input.clone();
     let mut pattern = pattern.clone();
@@ -52,10 +53,10 @@ fn match_str<'a, 'b>(input: &Chars<'a>, pattern: &Chars<'b>) -> Option<Chars<'a>
             None => break,
         };
         if let Some(inputch) = input.next() {
-            if inputch != patternch {    // if not equal
+            if inputch != patternch {
                 return None;
             }
-        } else {    // if x to the end
+        } else {
             return None;
         }
     }
@@ -72,6 +73,7 @@ fn match_type_end<'a>(input: &Chars<'a>) -> Option<Chars<'a>> {
     match_str(input, &mut TYPE_END.chars())
 }
 
+// Return matched type like symbol and content
 fn match_type<'a>(input: &Chars<'a>) -> Option<(Chars<'a>, HlfType)> {
     let mut input_it = input.clone(); 
     let mut enclose = String::new();
@@ -103,8 +105,9 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
     let mut result: Vec<HLF> = Vec::new();
     //let mut symbol_table: HashSet<String> = ::new();
 
-    // currently should get which part of a HLF
+    // Currently which part of a HLF we want to match
     let mut get_right: bool = false;
+
     let mut insymbol: bool = false;
     let mut incontent: bool = false;
 
@@ -433,7 +436,6 @@ mod hlf_parser_tests {
     #[test]
     #[should_panic]
     fn test_parse_no_content() {
-        //let 
         let input = "<!--symbol--> the symbol <!--symbol-->";
         parse(input).unwrap();
     }

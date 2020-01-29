@@ -35,3 +35,5 @@
                       +-------------+
   ```
 
++ Test: `cargo test`
++ Build : `cargo build`

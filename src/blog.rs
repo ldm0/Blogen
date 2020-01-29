@@ -56,7 +56,10 @@ mod blog_tests {
         assert_eq!(true, valid_date(2003, 2, 28));
 
         assert_eq!(true, valid_date(2003, 3, 31));
+    }
 
+    #[test]
+    fn test_invalid_date() {
         assert_eq!(false, valid_date(2001, 2, 29));
         assert_eq!(false, valid_date(2002, 2, 29));
         assert_eq!(false, valid_date(2003, 2, 29));

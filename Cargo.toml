@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 comrak = "0.6.2"
+dotenv = "0.15.0"
