@@ -2,8 +2,6 @@ use comrak::{markdown_to_html, ComrakOptions};
 
 use std::collections::HashMap;          // to store HLF 
 
-use crate::BLOG_FOLDER;
-
 use crate::blog_clusters::BlogClusters; // for template filling
 use crate::blog::Blog;                  // for template filling
 use crate::shared::path_title;          // for homepage template filling hyperlink
@@ -180,7 +178,7 @@ impl HTMLTemplate for HomepageTemplate {
         let blogs = cluster.get_blogs();
         for blog in blogs {
             match blog_chunk_rhs.get(0).unwrap() {
-                Symbol::T(x) => result.push_str(&x.replace("_slot_of_blog_path", &(BLOG_FOLDER!(&path_title(&blog.title)) + ".html"))
+                Symbol::T(x) => result.push_str(&x.replace("_slot_of_blog_path", &(path_title(&blog.title) + ".html"))
                                                   .replace("_slot_of_blog_title", &blog.title)
                                                   .replace("_slot_of_blog_preview", &blog.preview)),
                 _ => panic!(),

@@ -17,15 +17,15 @@ use std::fs;
 use std::env;
 use dotenv;
 
-fn get_blog_mds() -> Vec<(String, String)> {
-    let blog_subdirs = fs::read_dir(BLOG_PATH!())
-        .expect(&format!("read blog directory: {} failed.", BLOG_PATH!()));
+fn get_blog_mds(blog_path: &str) -> Vec<(String, String)> {
+    let blog_subdirs = fs::read_dir(blog_path)
+        .expect(&format!("read blog directory: {} failed.", blog_path));
 
     let blog_markdown_names: Vec<String>
         = blog_subdirs.map(|x| x.unwrap().file_name().into_string().unwrap()).collect();
 
     let blog_markdown_paths: Vec<String>
-        = blog_markdown_names.iter().map(|x| BLOG_PATH!(x)).collect();
+        = blog_markdown_names.iter().map(|x| blog_path.to_string() + x).collect();
 
     // Return filenames zipped with contents
     let blogs: Vec<(String, String)>
@@ -42,21 +42,33 @@ fn get_blog_mds() -> Vec<(String, String)> {
 
 fn main() {
     dotenv::dotenv().ok();
+    let tags_path               = env::var("TAGS_PATH")
+                                    .expect("Please specify tags path in environment variable.");
+    let homepage_template_path  = env::var("TEMPLATE_HOMEPAGE_PATH")
+                                    .expect("Please specify homepage template path in environment variable.");
+    let blog_template_path      = env::var("TEMPLATE_BLOG_PATH")
+                                    .expect("Please specify blog template path in environment variable.");
+    let cluster_template_path   = env::var("TEMPLATE_CLUSTER_PATH")
+                                    .expect("Please specify cluster template path in environment variable.");
+    let output_path             = env::var("OUTPUT_PATH")
+                                    .expect("Please specify output path in environment variable.");
+    let blog_path               = env::var("BLOG_PATH")
+                                    .expect("Please specify blog path in environment variable.");
 
-    let homepage_template_raw   = fs::read_to_string(ASSET_PATH!("template_homepage.html"))
+    let homepage_template_raw   = fs::read_to_string(&homepage_template_path)
                                     .expect("homepage template not found!");
-    let blog_template_raw       = fs::read_to_string(ASSET_PATH!("template_blog.html"))
+    let blog_template_raw       = fs::read_to_string(&blog_template_path)
                                     .expect("blog template not found!");
-    let cluster_template_raw    = fs::read_to_string(ASSET_PATH!("template_cluster.html"))
+    let cluster_template_raw    = fs::read_to_string(&cluster_template_path)
                                     .expect("cluster template not found!");
 
     let homepage_template   : HomepageTemplate    = HTMLTemplate::load(&homepage_template_raw).unwrap();
     let blog_template       : BlogTemplate        = HTMLTemplate::load(&blog_template_raw).unwrap();
     let cluster_template    : ClusterTemplate     = HTMLTemplate::load(&cluster_template_raw).unwrap();
 
-    let tags: String = fs::read_to_string(&ASSET_PATH!("tags.txt"))
+    let tags: String = fs::read_to_string(&tags_path)
                             .expect("failed to read tags.");
-    let blog_mds: Vec<(String, String)> = get_blog_mds();
+    let blog_mds: Vec<(String, String)> = get_blog_mds(&blog_path);
 
     let mut blog_clusters = BlogClusters::new();
     blog_clusters.add_tags(&tags);
@@ -68,17 +80,13 @@ fn main() {
     assert_eq!(cluster_html_result.len(), 1);
     assert_eq!(homepage_html_result.len(), 1);
 
-    match fs::create_dir_all(OUTPUT_PATH!(BLOG_FOLDER!())) {
-        Ok(_) => println!("Create direcotry \"{}\" if not exist.", OUTPUT_PATH!(BLOG_FOLDER!())),
-        Err(err) => println!("Create directory failed: {}.", err),
-    }
-    match fs::create_dir_all(OUTPUT_PATH!(HOMEPAGE_FOLDER!())) {
-        Ok(_) => println!("Create direcotry \"{}\" if not exist.", OUTPUT_PATH!(HOMEPAGE_FOLDER!())),
+    match fs::create_dir_all(&output_path) {
+        Ok(_) => println!("Create direcotry \"{}\" if not exist.", &output_path),
         Err(err) => println!("Create directory failed: {}.", err),
     }
 
     for (file_name, file_content) in blog_html_result {
-        let path = OUTPUT_PATH!(&BLOG_FOLDER!(&file_name));
+        let path = output_path.clone() + &file_name;
         match fs::write(&path, file_content) {
             Ok(_) => {
                 println!("Output to \"{}\" ok.", &path);
@@ -89,7 +97,7 @@ fn main() {
         }
     }
     for (file_name, file_content) in homepage_html_result {
-        let path = OUTPUT_PATH!(&HOMEPAGE_FOLDER!(&file_name));
+        let path = output_path.clone() + &file_name;
         match fs::write(&path, file_content) {
             Ok(_) => {
                 println!("Output to \"{}\" ok.", &path);

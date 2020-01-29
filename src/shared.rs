@@ -1,3 +1,4 @@
+/* Use paths in environment args rather than hard-code path
 #[macro_export]
 macro_rules! ASSET_PATH {
     () => {"assets/"};
@@ -32,6 +33,7 @@ macro_rules! OUTPUT_PATH {
     ($x:literal) => {concat!(HOMEPAGE_OUTPUT_PATH!(), $x)};
     ($x:expr) => {OUTPUT_PATH!().to_string() + $x};
 }
+*/
 
 // Fit average blog titles in webpage path. Used for path/filename generation
 // from blog.title and consistency check between content title and file title.
