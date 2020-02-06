@@ -8,6 +8,8 @@
         <link rel="stylesheet" type="text/css" href="./css/common.css">
         <link rel="stylesheet" type="text/css" href="./css/blog.css">
         <script defer src="./js/widget_fun.js"></script> 
+        <script> MathJax = {tex:{inlineMath:[['$', '$']]}} </script>
+        <script id="MathJax-script" async src="./js/tex-mml-chtml.js"></script>
     </head>
     <body>
         <div id="widget_plate">
@@ -40,12 +42,12 @@
                 2019/12/18
             </div>
             <div id="blog_preview">
-                一篇helloworld-like的博客。
+                一篇 helloworld-like 的博客。
             </div>
             <div id="blog_content">
                 <h2>开头</h2>
-<p>经过一段时间的摸鱼开发，总算是把博客的生成器写完了，总算是满足了自己不使用烂大街框架搭建Blog的心愿吧 (有毒)，接下来总算有一个空间可以让我安心的写一些文章了。</p>
-<h2>我的博客生成器Blogen</h2>
+<p>经过一段时间的摸鱼开发，总算是把博客的生成器写完了，总算是满足了自己不使用烂大街框架搭建 Blog 的心愿吧 (有毒)，接下来总算有一个空间可以让我安心的写一些文章了。</p>
+<h2>我的博客生成器 Blogen</h2>
 <ul>
 <li><a href="https://github.com/ldm0/blogen"><strong>Github</strong></a></li>
 </ul>
@@ -62,24 +64,24 @@
 <pre><code>(Donough Liu) will go hiking with [Alice] [Bob] in &lt;2020&gt;.
 </code></pre>
 <p>其中 <code>Donough Liu</code> 是作者的名字， <code>Alice</code> 和 <code>Bob</code> 是和作者 go hiking 的朋友的名字(朋友的名字有若干个，可能不止两个)， <code>2020</code> 是 go hiking 的时间。这时会想要使用一种方式来提供约束这段话的生成的模板，我肯定不会想要这样的形式的模板:</p>
-<pre><code class="language-json">{
-    snippet0        : &quot;(&quot;,
-    slot0           : author_name,
-    snippet1        : &quot;) will go hiking with [&quot;,
-    slot1_reptitive : partner,
-    snippet2        : &quot;] [&quot;,
-    snippet3        : &quot;] in &lt;&quot;,
-    slot2           : time,
-    snippet4        : &quot;&gt;.&quot;
-}
-</code></pre>
+<pre lang="json"><code><span style="color:#4f5b66;">{
+</span><span style="color:#4f5b66;">    &quot;</span><span style="color:#a3be8c;">snippet0</span><span style="color:#4f5b66;">&quot;        : &quot;</span><span style="color:#a3be8c;">(</span><span style="color:#4f5b66;">&quot;,
+</span><span style="color:#4f5b66;">    &quot;</span><span style="color:#a3be8c;">slot0</span><span style="color:#4f5b66;">&quot;           : &quot;</span><span style="color:#a3be8c;">author_name</span><span style="color:#4f5b66;">&quot;,
+</span><span style="color:#4f5b66;">    &quot;</span><span style="color:#a3be8c;">snippet1</span><span style="color:#4f5b66;">&quot;        : &quot;</span><span style="color:#a3be8c;">) will go hiking with [</span><span style="color:#4f5b66;">&quot;,
+</span><span style="color:#4f5b66;">    &quot;</span><span style="color:#a3be8c;">slot1_reptitive</span><span style="color:#4f5b66;">&quot; : &quot;</span><span style="color:#a3be8c;">partner</span><span style="color:#4f5b66;">&quot;,
+</span><span style="color:#4f5b66;">    &quot;</span><span style="color:#a3be8c;">snippet2</span><span style="color:#4f5b66;">&quot;        : &quot;</span><span style="color:#a3be8c;">] [</span><span style="color:#4f5b66;">&quot;,
+</span><span style="color:#4f5b66;">    &quot;</span><span style="color:#a3be8c;">snippet3</span><span style="color:#4f5b66;">&quot;        : &quot;</span><span style="color:#a3be8c;">] in &lt;</span><span style="color:#4f5b66;">&quot;,
+</span><span style="color:#4f5b66;">    &quot;</span><span style="color:#a3be8c;">slot2</span><span style="color:#4f5b66;">&quot;           : &quot;</span><span style="color:#a3be8c;">time</span><span style="color:#4f5b66;">&quot;,
+</span><span style="color:#4f5b66;">    &quot;</span><span style="color:#a3be8c;">snippet4</span><span style="color:#4f5b66;">&quot;        : &quot;</span><span style="color:#a3be8c;">&gt;.</span><span style="color:#4f5b66;">&quot;
+</span><span style="color:#4f5b66;">}
+</span></code></pre>
 <p>它过于丑陋，没有可读性且难以维护。这时候如果使用文法辅助的话，我们的片段提供可以带有更多语义信息 (这里为了解释以 EBNF 形式提供):</p>
-<pre><code class="language-ebnf">main     = &quot;(&quot;, author_name, &quot;) will go hiking with &quot;, { partners }, &quot; in &quot;, time, &quot;.&quot;;
-partners = &quot;[&quot;, partner_name, &quot;]&quot;;
-extern author_name
-extern parter_name
-extern time
-</code></pre>
+<pre lang="ebnf"><code><span style="color:#4f5b66;">main     = &quot;(&quot;, author_name, &quot;) will go hiking with &quot;, { partners }, &quot; in &quot;, time, &quot;.&quot;;
+</span><span style="color:#4f5b66;">partners = &quot;[&quot;, partner_name, &quot;]&quot;;
+</span><span style="color:#4f5b66;">extern author_name
+</span><span style="color:#4f5b66;">extern parter_name
+</span><span style="color:#4f5b66;">extern time
+</span></code></pre>
 <p>其中这里我们定义了一个不在 EBNF 标准里的关键词 <code>extern</code>，它的意思就是由其它模块来提供此部分的信息，这对应的博客网页生成中的就是类似于文章标题，文章时间，文章内容等等。使用文法的形式构造模板来提供代码片段有很好的可读性，很方便维护。而由于 Blogen 生成的都是 HTML ，我给它设计的生成模板语法更特殊更好玩一点，但原理大体相似，这里就不多介绍了。</p>
 <h2>博客基调</h2>
 <h3><strong>Cool | Fun</strong></h3>

@@ -2,6 +2,9 @@
  * Auto matically convert raw markdown blogs to my serveral blog web pages
  */
 
+#[macro_use]
+extern crate lazy_static;
+
 mod tag;
 mod blog;
 mod blog_clusters;

@@ -8,6 +8,8 @@
         <link rel="stylesheet" type="text/css" href="./css/common.css">
         <link rel="stylesheet" type="text/css" href="./css/blog.css">
         <script defer src="./js/widget_fun.js"></script> 
+        <script> MathJax = {tex:{inlineMath:[['$', '$']]}} </script>
+        <script id="MathJax-script" async src="./js/tex-mml-chtml.js"></script>
     </head>
     <body>
         <div id="widget_plate">
@@ -69,56 +71,56 @@ Bjarne Stroustrup 在 <a href="http://www.stroustrup.com/bs_faq2.html#virtual-ct
 <h2>悖论，是吗</h2>
 <p>Delphi里面有一个很好玩的东西：Class Reference。一个 Class Reference 中装着一个 class 的 type 而不是 class 的 instance，这类似于 C# 中的 TypeVariable（毕竟一脉相承-_-）。<br />
 下面一段代码演示 Delphi 中是如何使用 Class Reference 的：</p>
-<pre><code class="language-pascal">{$mode objfpc}  // directive to be used for defining classes
-{$m+}           // directive to be used for using constructor
-
-program test;
-type
-    Base = class
-    public
-        constructor Create; virtual;
-    end;
-
-    Foo = class(Base)
-    public
-        constructor Create; override;
-    end;
-
-    Bar = class(Base)
-    public
-        constructor Create; override;
-    end;
-    
-    BaseRef = class of Base; //declares a class reference type
-
-var
-    base_ref: BaseRef;
-    base_instance: Base;
-
-constructor Base.create();
-begin
-    writeln('Base was created');
-end;
-
-constructor Foo.create();
-begin
-    writeln('Foo was created');
-end;
-
-constructor Bar.create();
-begin
-    writeln('Bar was created');
-end;
-
-begin  
-   base_ref := Base;
-   base_instance := base_ref.Create; // returns a Base
-   base_ref := Foo;
-   base_instance := base_ref.Create; // returns a Foo
-   base_ref := Bar;
-   base_instance := base_ref.Create; // returns a Bar
-end.
-</code></pre>
+<pre lang="pascal"><code><span style="color:#a7adba;">{$mode objfpc}  // directive to be used for defining classes
+</span><span style="color:#a7adba;">{$m+}           // directive to be used for using constructor
+</span><span style="color:#4f5b66;">
+</span><span style="color:#b48ead;">program</span><span style="color:#4f5b66;"> test;
+</span><span style="color:#b48ead;">type
+</span><span style="color:#4f5b66;">    Base = </span><span style="color:#b48ead;">class
+</span><span style="color:#4f5b66;">    </span><span style="color:#b48ead;">public
+</span><span style="color:#4f5b66;">        </span><span style="color:#b48ead;">constructor</span><span style="color:#4f5b66;"> Create; </span><span style="color:#b48ead;">virtual</span><span style="color:#4f5b66;">;
+</span><span style="color:#4f5b66;">    </span><span style="color:#b48ead;">end</span><span style="color:#4f5b66;">;
+</span><span style="color:#4f5b66;">
+</span><span style="color:#4f5b66;">    Foo = </span><span style="color:#b48ead;">class</span><span style="color:#4f5b66;">(Base)
+</span><span style="color:#4f5b66;">    </span><span style="color:#b48ead;">public
+</span><span style="color:#4f5b66;">        </span><span style="color:#b48ead;">constructor</span><span style="color:#4f5b66;"> Create; override;
+</span><span style="color:#4f5b66;">    </span><span style="color:#b48ead;">end</span><span style="color:#4f5b66;">;
+</span><span style="color:#4f5b66;">
+</span><span style="color:#4f5b66;">    Bar = </span><span style="color:#b48ead;">class</span><span style="color:#4f5b66;">(Base)
+</span><span style="color:#4f5b66;">    </span><span style="color:#b48ead;">public
+</span><span style="color:#4f5b66;">        </span><span style="color:#b48ead;">constructor</span><span style="color:#4f5b66;"> Create; override;
+</span><span style="color:#4f5b66;">    </span><span style="color:#b48ead;">end</span><span style="color:#4f5b66;">;
+</span><span style="color:#4f5b66;">    
+</span><span style="color:#4f5b66;">    BaseRef = </span><span style="color:#b48ead;">class of</span><span style="color:#4f5b66;"> Base; </span><span style="color:#a7adba;">//declares a class reference type
+</span><span style="color:#4f5b66;">
+</span><span style="color:#b48ead;">var
+</span><span style="color:#4f5b66;">    base_ref: BaseRef;
+</span><span style="color:#4f5b66;">    base_instance: Base;
+</span><span style="color:#4f5b66;">
+</span><span style="color:#b48ead;">constructor</span><span style="color:#4f5b66;"> Base.create();
+</span><span style="color:#b48ead;">begin
+</span><span style="color:#4f5b66;">    writeln(&#39;</span><span style="color:#a3be8c;">Base was created</span><span style="color:#4f5b66;">&#39;);
+</span><span style="color:#b48ead;">end</span><span style="color:#4f5b66;">;
+</span><span style="color:#4f5b66;">
+</span><span style="color:#b48ead;">constructor</span><span style="color:#4f5b66;"> Foo.create();
+</span><span style="color:#b48ead;">begin
+</span><span style="color:#4f5b66;">    writeln(&#39;</span><span style="color:#a3be8c;">Foo was created</span><span style="color:#4f5b66;">&#39;);
+</span><span style="color:#b48ead;">end</span><span style="color:#4f5b66;">;
+</span><span style="color:#4f5b66;">
+</span><span style="color:#b48ead;">constructor</span><span style="color:#4f5b66;"> Bar.create();
+</span><span style="color:#b48ead;">begin
+</span><span style="color:#4f5b66;">    writeln(&#39;</span><span style="color:#a3be8c;">Bar was created</span><span style="color:#4f5b66;">&#39;);
+</span><span style="color:#b48ead;">end</span><span style="color:#4f5b66;">;
+</span><span style="color:#4f5b66;">
+</span><span style="color:#b48ead;">begin  
+</span><span style="color:#4f5b66;">   base_ref := Base;
+</span><span style="color:#4f5b66;">   base_instance := base_ref.Create; </span><span style="color:#a7adba;">// returns a Base
+</span><span style="color:#4f5b66;">   base_ref := Foo;
+</span><span style="color:#4f5b66;">   base_instance := base_ref.Create; </span><span style="color:#a7adba;">// returns a Foo
+</span><span style="color:#4f5b66;">   base_ref := Bar;
+</span><span style="color:#4f5b66;">   base_instance := base_ref.Create; </span><span style="color:#a7adba;">// returns a Bar
+</span><span style="color:#b48ead;">end</span><span style="color:#4f5b66;">.
+</span></code></pre>
 <p>Outputs</p>
 <pre><code>Base was created
 Foo was created

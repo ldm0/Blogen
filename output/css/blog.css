@@ -35,14 +35,14 @@
 }
 
 #blog_content>pre>code {
-    font-size: 13px;
+    font-size: 1em;
     font-family: Consolas, monospace;
     line-height: 1em;
 }
 
 #blog_content>blockquote {
     background-color: #EEE;
-    margin: 0 0 0 0;
+    margin: 0;
     padding: 0.5em 1em;
     box-shadow: -0.3em 0px #55F;
 }
@@ -62,4 +62,14 @@
 
 .tag:not(:last-child)::after {
     content: ' | ';
+}
+
+table {
+    border-collapse: collapse;
+}
+
+th,
+td {
+    border: 1px solid black;
+    padding: .1em .5em;
 }

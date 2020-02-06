@@ -4,6 +4,10 @@ html {
     line-height: 1.618em;
 }
 
+pre {
+    margin: 0;
+}
+
 #widget_plate {
     position: fixed;
     top: 10%;
