@@ -37,3 +37,8 @@
 
 + Test: `cargo test`
 + Build : `cargo build`
+
+TODO:
++ [x] LaTeX
++ [x] Code highlighting
++ [ ] Blog sort by time

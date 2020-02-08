@@ -73,3 +73,8 @@ td {
     border: 1px solid black;
     padding: .1em .5em;
 }
+
+.latex {
+    font-family: sans-serif;
+    display: inline;
+}

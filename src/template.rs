@@ -33,15 +33,17 @@ use crate::hlf_parser::{HLF, HlfLhs, HlfRhs, Symbol, parse};
 
 const LATEX_MARK: &[u8; 9] = b"lAtExhERE";
 const LATEX_MARK_LEN: usize = LATEX_MARK.len();
-const NEEDS_ESCAPED : [bool; 256] = [
+const LATEX_TAG_BEGIN: &[u8; 19] = br#"<div class="latex">"#;
+const LATEX_TAG_END: &[u8; 6] = b"</div>";
+const NEEDS_ESCAPE : [bool; 256] = [
     false, false, false, false, false, false, false, false,
     false, false, false, false, false, false, false, false,
     false, false, false, false, false, false, false, false,
     false, false, false, false, false, false, false, false,
-    false, false, true,  false, false, false, true,  false,
+    false, false, true,  false, false, false, true,  true,
     false, false, false, false, false, false, false, false,
     false, false, false, false, false, false, false, false,
-    false, false, false, false, true, false, true, false,
+    false, false, false, false, true,  false, true,  false,
     false, false, false, false, false, false, false, false,
     false, false, false, false, false, false, false, false,
     false, false, false, false, false, false, false, false,
@@ -68,9 +70,10 @@ const NEEDS_ESCAPED : [bool; 256] = [
     false, false, false, false, false, false, false, false,
 ];
 
-// Input markdown, this function return content with latex replaced and latex array
+// With markdown as input, this function returns content with latex replaced by
+// mark and array of latex extracted.
 pub fn extract_latex(s: &str) -> (String, Vec<String>) {
-    // Assume `$` pair in a line as latex code fence.
+    // Assume `$` pairs in a line as latex code fence.
     let s = s.as_bytes();
     let mut result = Vec::with_capacity(s.len());
     let mut latexes = Vec::new();
@@ -103,6 +106,8 @@ pub fn extract_latex(s: &str) -> (String, Vec<String>) {
     (unsafe { String::from_utf8_unchecked(result) }, latexes)
 }
 
+// Replace marks in string given with latexes given. If latexes given more than
+// marks in string, this function returns None.
 pub fn insert_latex(s: &str, latexes: &Vec<String>) -> Option<String> {
     let s = s.as_bytes();
     let mut latexes_iter = 0;
@@ -113,7 +118,9 @@ pub fn insert_latex(s: &str, latexes: &Vec<String>) -> Option<String> {
     while i < i_max {
         if &s[i..i+LATEX_MARK_LEN] == LATEX_MARK {
             result.extend(&s[begin..i]);
+            result.extend(LATEX_TAG_BEGIN);
             result.extend(html_escape(&latexes[latexes_iter]).as_bytes());
+            result.extend(LATEX_TAG_END);
             latexes_iter += 1;
             begin = i + LATEX_MARK_LEN;
             i = begin;
@@ -170,9 +177,10 @@ pub fn html_escape(s: &str) -> String {
     let mut offset = 0;
     let mut result = Vec::with_capacity(s.len());
     for (i, &byte) in s.iter().enumerate() {
-        if NEEDS_ESCAPED[byte as usize] {
+        if NEEDS_ESCAPE[byte as usize] {
             let esc: &[u8] = match byte {
                 b'"' => b"&quot;",
+                b'\'' => b"&#39;",
                 b'&' => b"&amp;",
                 b'<' => b"&lt;",
                 b'>' => b"&gt;",
@@ -310,7 +318,7 @@ impl HTMLTemplate for BlogTemplate {
                     //    some characters will be escaped to fit into html)
 
                     // This solution is inspired by author of comrak:
-                    // https://github.com/kivikakk/comrak/issues/129 But
+                    // https://github.com/kivikakk/comrak/issues/129. But
                     // actually a better solution is extracting code blocks
                     // before converting markdown to html and insert the
                     // highlighted code after it. This is how we process latex
@@ -464,6 +472,7 @@ impl HTMLTemplate for HomepageTemplate {
 mod template_tests{
     use super::*;
 
+
     #[test]
     fn test_html_unescape() {
         assert_eq!(html_unescape("emm"), "emm");
@@ -481,5 +490,72 @@ mod template_tests{
         assert_eq!(html_unescape("&quot;&lt;"), "\"<");
         assert_eq!(html_unescape("&quot;&lt"), "\"&lt");
         assert_eq!(html_unescape("&lt;&quot;&quot;&gt;"), "<\"\">");
+    }
+    
+    #[test]
+    fn test_html_escape() {
+        assert_eq!(html_escape("emm"), "emm");
+        assert_eq!("&quot;", html_escape("\""));
+        assert_eq!("&amp;", html_escape("&"));
+        assert_eq!("&#39;", html_escape("\'"));
+        assert_eq!("&lt;", html_escape("<"));
+        assert_eq!("&gt;", html_escape(">"));
+
+        assert_eq!("&amp;emm", html_escape("&emm"));
+        assert_eq!("&amp;quot", html_escape("&quot"));
+        assert_eq!("&amp;qu&lt;", html_escape("&qu<"));
+        assert_eq!("&amp;qu&amp;lt", html_escape("&qu&lt"));
+        assert_eq!("&quot;&lt;", html_escape("\"<"));
+        assert_eq!("&quot;&amp;lt", html_escape("\"&lt"));
+        assert_eq!("&lt;&quot;&quot;&gt;", html_escape("<\"\">"));
+    }
+
+    #[test]
+    fn test_html_escape_and_unescape() {
+        let chaos = r#"
+        $%^Y&UIafjnh%^&*(OGFTY^&*IOL<KO{}?L:"KJYT<><<<>>"""KK'''
+        'L';'''"''"'""<><><>GFDER$%^&*()*&^%$%YH^T&*UIOJHVYFT^&Y
+        *IOUYTE@#!@#$%^&*((~!@#$%^&*()(*^%~`1234567897^%$#@!@#$%
+        ^&*148964865}"?>:{}"?><LP{}"?><KJHGBNL;oijk,./'][p;.,mnb
+        vcxsrtyjkghmnabsdjf])))
+        "#;
+
+        assert_eq!(html_unescape(&html_escape(&chaos)), chaos);
+    }
+
+    #[test]
+    fn test_latex_extraction() {
+        let s = "
+            hi $I'm latex0$ alice
+            hi $I'm latex1$ bob
+            hi $I'm not latex
+            hi $I'm latex2$ $I'm not latex
+            hi $I'm latex3$ alice hi $I'm latex4$ bob
+        ";
+        let (_, latexes) = extract_latex(s);
+        assert_eq!(latexes, [
+            "$I'm latex0$",
+            "$I'm latex1$",
+            "$I'm latex2$",
+            "$I'm latex3$",
+            "$I'm latex4$",
+        ]);
+    }
+
+    #[test]
+    fn test_latex_insertion() {
+        let mark: &str = unsafe {
+            &String::from_utf8_unchecked(LATEX_MARK.to_vec())
+        };
+        let begin: &str = unsafe {
+            &String::from_utf8_unchecked(LATEX_TAG_BEGIN.to_vec())
+        };
+        let end: &str = unsafe {
+            &String::from_utf8_unchecked(LATEX_TAG_END.to_vec())
+        };
+        let s = ["a", mark, "b", mark, "c"].join("");
+        let latexes = vec![String::from("$Alice$"), String::from("$Bob$")];
+        let s = insert_latex(&s, &latexes);
+        assert_eq!(s, Some(["a", begin, &latexes[0], end, "b", begin, &latexes[1], end, "c"].join("")));
     }
 }
