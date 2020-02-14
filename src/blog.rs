@@ -25,7 +25,7 @@ pub struct Blog {
 }
 
 impl Blog {
-    pub fn new(year: i64, month: i64, day: i64, title: &str, tags: &Vec<TagHandle>, preview: &str, content: &str) -> Self {
+    pub fn new(year: i64, month: i64, day: i64, title: String, tags: Vec<TagHandle>, preview: String, content: String) -> Self {
         // This isn't a program for others, I would use it myself so I will panic whenever possible
         if !valid_date(year, month, day) {
             panic!("Blog's date is invalid!");
@@ -34,10 +34,10 @@ impl Blog {
             year: year as u16,
             month: month as u16,
             day: day as u16,
-            title: title.to_string(),
-            tags: tags.clone(),
-            preview: preview.to_string(),
-            content: content.to_string(),
+            title: title,
+            tags: tags,
+            preview: preview,
+            content: content,
         }
     }
 }

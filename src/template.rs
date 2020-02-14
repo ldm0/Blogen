@@ -6,17 +6,16 @@ use regex::Regex;                       // for code block extraction
 // for code block highlighting
 use syntect::{html, parsing, highlighting, easy, util};
 use html::{append_highlighted_html_for_styled_line, IncludeBackground};
-use parsing::{SyntaxSet, SyntaxReference};
-use highlighting::{Theme, ThemeSet};
+use parsing::SyntaxSet;
+use highlighting::ThemeSet;
 use easy::HighlightLines;
 use util::LinesWithEndings;
 
 use crate::blog_clusters::BlogClusters;         // for template filling
-use crate::blog::Blog;                          // for template filling
 // for code block unescaping, homepage template filling 
 use crate::shared::path_title;
 use crate::tag::Tag;                            // for template filling
-use crate::hlf_parser::{HLF, HlfLhs, HlfRhs, Symbol, parse};
+use crate::hlf_parser::{HlfLhs, HlfRhs, Symbol, parse};
 // use std::io;
 
 

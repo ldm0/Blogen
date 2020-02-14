@@ -140,7 +140,17 @@ impl BlogClusters {
             // Gen handle of current blog 
             let blog_handle = self.blogs.len();
 
-            self.blogs.push(Blog::new(time[0], time[1], time[2], &title, &tag_handles, preview, content));
+            self.blogs.push(
+                Blog::new(
+                    time[0],
+                    time[1],
+                    time[2],
+                    title.to_string(),
+                    tag_handles.clone(),
+                    preview.to_string(),
+                    content.to_string()
+                )
+            );
 
             for tag_handle in tag_handles {
                 // We konw this tag is always valid

@@ -44,9 +44,7 @@ enum HlfType {
 
 // Check if input prefixs with pattern
 // Return end position
-fn match_str<'a, 'b>(input: &Chars<'a>, pattern: &Chars<'b>) -> Option<Chars<'a>> {
-    let mut input = input.clone();
-    let mut pattern = pattern.clone();
+fn match_str<'a, 'b>(mut input: Chars<'a>, mut pattern: Chars<'b>) -> Option<Chars<'a>> {
     loop {
         let patternch = match pattern.next() {
             Some(x) => x,
@@ -63,27 +61,26 @@ fn match_str<'a, 'b>(input: &Chars<'a>, pattern: &Chars<'b>) -> Option<Chars<'a>
     Some(input)
 }
 
-fn match_type_begin<'a>(input: &Chars<'a>) -> Option<Chars<'a>> {
+fn match_type_begin<'a>(input: Chars<'a>) -> Option<Chars<'a>> {
     const TYPE_BEGIN: &str = "<!--";
-    match_str(input, &mut TYPE_BEGIN.chars())
+    match_str(input, TYPE_BEGIN.chars())
 }
 
-fn match_type_end<'a>(input: &Chars<'a>) -> Option<Chars<'a>> {
+fn match_type_end<'a>(input: Chars<'a>) -> Option<Chars<'a>> {
     const TYPE_END: &str = "-->";
-    match_str(input, &mut TYPE_END.chars())
+    match_str(input, TYPE_END.chars())
 }
 
 // Return matched type like symbol and content
-fn match_type<'a>(input: &Chars<'a>) -> Option<(Chars<'a>, HlfType)> {
-    let mut input_it = input.clone(); 
+fn match_type<'a>(mut input_it: Chars<'a>) -> Option<(Chars<'a>, HlfType)> {
     let mut enclose = String::new();
-    if let Some(it) = match_type_begin(&input_it) {
+    if let Some(it) = match_type_begin(input_it.clone()) {
         input_it = it;
     } else {
         return None;
     }
     loop {
-        if let Some(it) = match_type_end(&input_it) {
+        if let Some(it) = match_type_end(input_it.clone()) {
             input_it = it;
             return match enclose.trim() {
                 "symbol" => Some((input_it, HlfType::Symbol)),
@@ -118,7 +115,7 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
         if get_right {  // get right side of HLF
             if incontent {  // get right side and in content chunk
                 if insymbol {   // get right side and in content's symbol part
-                    if let Some((it, typ)) = match_type(&input) {
+                    if let Some((it, typ)) = match_type(input.clone()) {
                         match typ {
                             HlfType::Symbol => {
                                 input = it;
@@ -140,7 +137,7 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
                         }
                     }
                 } else {        // get right side and in content's non-symbol part
-                    if let Some((it, typ)) = match_type(&input) {
+                    if let Some((it, typ)) = match_type(input.clone()) {
                         match typ {
                             HlfType::Symbol => {
                                 input = it;
@@ -170,7 +167,7 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
                     }
                 }
             } else { // get right side and not in content
-                if let Some((it, typ)) = match_type(&input) {
+                if let Some((it, typ)) = match_type(input.clone()) {
                     match typ {
                         HlfType::Content => {
                             input = it;
@@ -183,15 +180,14 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
                     }
                 } else {
                     // ignore 
-                    match input.next() {
-                        Some(_) => (),
-                        None => return None,
+                    if let None = input.next() {
+                        return None;
                     }
                 }
             }
         } else { // get left side of HLF
             if insymbol { //left side and in symbol
-                if let Some((it, typ)) = match_type(&input){
+                if let Some((it, typ)) = match_type(input.clone()){
                     match typ {
                         HlfType::Symbol => {
                             input = it;
@@ -214,7 +210,7 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
                     }
                 }
             } else {    // left side and not in symbol
-                if let Some((it, typ)) = match_type(&input) {
+                if let Some((it, typ)) = match_type(input.clone()) {
                     match typ {
                         HlfType::Symbol => {
                             input = it;
@@ -228,9 +224,8 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
                     }
                 } else {
                     // ignore
-                    match input.next() {
-                        Some(_) => (),
-                        None => return Some(result),
+                    if let None = input.next() {
+                        return Some(result);
                     }
                 }
             }
@@ -255,12 +250,12 @@ mod hlf_parser_tests {
     fn test_match_str() {
         macro_rules! can_match {
             ($input: expr, $pattern: expr) => {
-                assert!(!is_none!(match_str(&$input.chars(), &$pattern.chars())));
+                assert!(!is_none!(match_str($input.chars(), $pattern.chars())));
             };
         }
         macro_rules! cannot_match {
             ($input: expr, $pattern: expr) => {
-                assert!(is_none!(match_str(&$input.chars(), &$pattern.chars())));
+                assert!(is_none!(match_str($input.chars(), $pattern.chars())));
             };
         }
         can_match!("a", "a");
@@ -277,12 +272,12 @@ mod hlf_parser_tests {
     fn test_match_type_begin() {
         macro_rules! can_match_begin {
             ($input: expr) => {
-                assert!(!is_none!(match_type_begin(&$input.chars())));
+                assert!(!is_none!(match_type_begin($input.chars())));
             }
         }
         macro_rules! cannot_match_begin {
             ($input: expr) => {
-                assert!(is_none!(match_type_begin(&$input.chars())));
+                assert!(is_none!(match_type_begin($input.chars())));
             }
         }
         can_match_begin!("<!--");
@@ -296,12 +291,12 @@ mod hlf_parser_tests {
     fn test_match_type_end() {
         macro_rules! can_match_end {
             ($input: expr) => {
-                assert!(!is_none!(match_type_end(&$input.chars())));
+                assert!(!is_none!(match_type_end($input.chars())));
             }
         }
         macro_rules! cannot_match_end {
             ($input: expr) => {
-                assert!(is_none!(match_type_end(&$input.chars())));
+                assert!(is_none!(match_type_end($input.chars())));
             }
         }
         can_match_end!("-->");
@@ -314,11 +309,11 @@ mod hlf_parser_tests {
 
     #[test]
     fn test_match_type() {
-        let (_, typ) = match_type(&"<!--symbol-->".chars()).unwrap();
+        let (_, typ) = match_type("<!--symbol-->".chars()).unwrap();
         assert_eq!(HlfType::Symbol, typ);
-        let (_, typ) = match_type(&"<!--content-->".chars()).unwrap();
+        let (_, typ) = match_type("<!--content-->".chars()).unwrap();
         assert_eq!(HlfType::Content, typ);
-        if let None = match_type(&"<!--hahaha-->".chars()) {
+        if let None = match_type("<!--hahaha-->".chars()) {
             assert!(true);
         } else {
             assert!(false);
