@@ -5,10 +5,10 @@ pub struct Tag {
 }
 
 impl Tag {
-    pub fn new(name: &str, description: &str) -> Tag {
+    pub fn new(name: String, description: String) -> Tag {
         Tag {
-            name: name.to_string(),
-            description: description.to_string(),
+            name: name,
+            description: description,
         }
     }
 }

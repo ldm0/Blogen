@@ -6,6 +6,7 @@ use crate::shared::path_title;
 use std::string::String;
 use std::str;
 
+// Currently just index of a blog or tag in vector
 pub type BlogHandle = usize;
 pub type TagHandle = usize;
 
@@ -16,11 +17,11 @@ pub type TagHandle = usize;
 
 
 pub struct BlogClusters {
-    //blog_map: HashMap<String, BlogHandle>, currently now used
-    tag_map: HashMap<String, TagHandle>,
+    //blog_map: HashMap<String, BlogHandle>, currently not used
+    tag_map: HashMap<String, TagHandle>, // map tag name to index of tag in tag vector
     tags: Vec<Tag>,
     blogs: Vec<Blog>,
-    tag_blog_map: HashMap<TagHandle, Vec<BlogHandle>>,
+    tag_blog_map: HashMap<TagHandle, Vec<BlogHandle>>, // map tag handle to handles of blog referencing it
 }
 
 impl BlogClusters {
@@ -36,13 +37,14 @@ impl BlogClusters {
     // used when parse tag file
     // return if add successfully 
     // when tag_name is present, description is not updated
-    fn add_tag(&mut self, tag_name: &str, tag_desc: &str) -> bool {
-        if self.tag_map.contains_key(tag_name) {
-            false
+    fn add_tag(&mut self, tag_name: String, tag_desc: String) -> Option<TagHandle> {
+        if self.tag_map.contains_key(&tag_name) {
+            None
         } else {
-            self.tags.push(Tag::new(tag_name, tag_desc));
-            self.tag_map.insert(tag_name.to_string(), self.tags.len() - 1);
-            true
+            let tag_handle = self.tags.len();
+            self.tags.push(Tag::new(tag_name.clone(), tag_desc));
+            self.tag_map.insert(tag_name, tag_handle);
+            Some(tag_handle)
         }
     }
 
@@ -70,15 +72,21 @@ impl BlogClusters {
                                     .collect();
         for line in lines {
             if !line.is_empty() {
+                let line = line.to_string();
                 if name_found {
-                    if !self.add_tag(&tag_name, &line) {
-                        panic!("Duplicate tag name found");
+                    // actually this `.clone()` is just useless, rust lifetime
+                    // analyzer is broken on complicated situation like this.
+                    // :-/
+                    match self.add_tag(tag_name.clone(), line) {
+                        Some(tag_handle) => {
+                            self.tag_blog_map.insert(tag_handle, Vec::new());
+                        }
+                        None => panic!("Duplicate tag name found."),
                     }
-                    name_found = false;
                 } else {
-                    tag_name = line.to_string();
-                    name_found = true;
+                    tag_name = line;
                 }
+                name_found = !name_found;
             }
         }
     }
@@ -93,7 +101,7 @@ impl BlogClusters {
             let title = line_it.next().unwrap().trim();
             // We need to ensure title in content is roughly the same as file name
             // the path_title is only used for validation, the title stored is unprocessed.
-            assert_eq!(&path_title(title), &path_title(blog_path_title), "filname need to correspond to the article title");
+            assert_eq!(&path_title(title), &path_title(blog_path_title), "filename needs to be correspond to the article title");
 
             // Second line is time: `2000/9/27`
             let time: Vec<i64>          = line_it.next().unwrap()
@@ -106,7 +114,7 @@ impl BlogClusters {
                                                 .split('|')
                                                 .map(|x| x.trim())
                                                 .collect();
-            let tags: Vec<TagHandle>    = tag_names.into_iter()
+            let tag_handles: Vec<TagHandle>    = tag_names.into_iter()
                                                 .map(|x| *self.get_tag_handle(x).expect("tag name not present in tag file"))
                                                 .collect();
 
@@ -129,7 +137,17 @@ impl BlogClusters {
             // Get the content part
             let content = parts.next().expect("where is the content?").trim();
 
-            self.blogs.push(Blog::new(time[0], time[1], time[2], &title, &tags, preview, content))
+            // Gen handle of current blog 
+            let blog_handle = self.blogs.len();
+
+            self.blogs.push(Blog::new(time[0], time[1], time[2], &title, &tag_handles, preview, content));
+
+            for tag_handle in tag_handles {
+                // We konw this tag is always valid
+                self.tag_blog_map.get_mut(&tag_handle)
+                                 .unwrap()
+                                 .push(blog_handle);
+            }
         }
     }
 
