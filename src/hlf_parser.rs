@@ -112,61 +112,64 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
     let mut tmp_str = String::new();
 
     loop {
-        if get_right {  // get right side of HLF
-            if incontent {  // get right side and in content chunk
-                if insymbol {   // get right side and in content's symbol part
-                    if let Some((it, typ)) = match_type(input.clone()) {
-                        match typ {
-                            HlfType::Symbol => {
-                                input = it;
-                                insymbol = false;
-                                // symbol should be trimmed
-                                tmp_hlf.rhs.push(Symbol::N(tmp_str.trim().to_string()));
-                                tmp_str.clear();
-                                //println!("symbol in content close");
-                            }
-                            HlfType::Content => {
-                                // no content in symbol segment
-                                return None;
-                            }
+        match (get_right, incontent, insymbol) {
+            // Get right side and in content's symbol part
+            (true, true, true) => {
+                if let Some((it, typ)) = match_type(input.clone()) {
+                    match typ {
+                        HlfType::Symbol => {
+                            input = it;
+                            insymbol = false;
+                            // symbol should be trimmed
+                            tmp_hlf.rhs.push(Symbol::N(tmp_str.trim().to_string()));
+                            tmp_str.clear();
+                            //println!("symbol in content close");
                         }
-                    } else {
-                        match input.next() {
-                            Some(ch) => tmp_str.push(ch),
-                            None => return None,
+                        HlfType::Content => {
+                            // no content in symbol segment
+                            return None;
                         }
                     }
-                } else {        // get right side and in content's non-symbol part
-                    if let Some((it, typ)) = match_type(input.clone()) {
-                        match typ {
-                            HlfType::Symbol => {
-                                input = it;
-                                insymbol = true;
-                                tmp_hlf.rhs.push(Symbol::T(tmp_str.clone()));
-                                tmp_str.clear();
-                                //println!("get a symbol in content");
-                            }
-                            HlfType::Content => {
-                                // content ends
-                                input = it;
-                                incontent = false;
-                                get_right = false;
-                                tmp_hlf.rhs.push(Symbol::T(tmp_str.clone()));
-                                tmp_str.clear();
-                                result.push(tmp_hlf);
-                                tmp_hlf = HLF::new();
-                                //println!("content close");
-                            }
-                        }
-                    } else {
-                        match input.next() {
-                            // append to content
-                            Some(ch) => tmp_str.push(ch),
-                            None => return None,
-                        }
+                } else {
+                    match input.next() {
+                        Some(ch) => tmp_str.push(ch),
+                        None => return None,
                     }
                 }
-            } else { // get right side and not in content
+            }
+            // Get right side and in content's non-symbol part
+            (true, true, false) => {
+                if let Some((it, typ)) = match_type(input.clone()) {
+                    match typ {
+                        HlfType::Symbol => {
+                            input = it;
+                            insymbol = true;
+                            tmp_hlf.rhs.push(Symbol::T(tmp_str.clone()));
+                            tmp_str.clear();
+                            //println!("get a symbol in content");
+                        }
+                        HlfType::Content => {
+                            // content ends
+                            input = it;
+                            incontent = false;
+                            get_right = false;
+                            tmp_hlf.rhs.push(Symbol::T(tmp_str.clone()));
+                            tmp_str.clear();
+                            result.push(tmp_hlf);
+                            tmp_hlf = HLF::new();
+                            //println!("content close");
+                        }
+                    }
+                } else {
+                    match input.next() {
+                        // append to content
+                        Some(ch) => tmp_str.push(ch),
+                        None => return None,
+                    }
+                }
+            }
+            // Get right side and not in content
+            (true, false, _) => {
                 if let Some((it, typ)) = match_type(input.clone()) {
                     match typ {
                         HlfType::Content => {
@@ -185,8 +188,8 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
                     }
                 }
             }
-        } else { // get left side of HLF
-            if insymbol { //left side and in symbol
+            // Get left side and in symbol
+            (false, _, true) => {
                 if let Some((it, typ)) = match_type(input.clone()){
                     match typ {
                         HlfType::Symbol => {
@@ -209,7 +212,9 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
                         None => return None,
                     }
                 }
-            } else {    // left side and not in symbol
+            }
+            // Get left side and not in symbol
+            (false, _, false) => {
                 if let Some((it, typ)) = match_type(input.clone()) {
                     match typ {
                         HlfType::Symbol => {
