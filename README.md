@@ -41,4 +41,4 @@
 TODO:
 + [x] LaTeX
 + [x] Code highlighting
-+ [ ] Blog sort by time
++ [x] Blog sort by time

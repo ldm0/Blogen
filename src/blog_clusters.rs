@@ -15,13 +15,17 @@ pub type TagHandle = usize;
 // Add tags
 // Insert blogs(after tags were added because tags in metadata of articles needs validation)
 
+// Squash time to comparable format
+fn time_squash<T: Into<u64>>(year: T, month: T, day: T) -> u64 {
+    year.into() * 1024 + month.into() * 64 + day.into()
+}
 
 pub struct BlogClusters {
-    //blog_map: HashMap<String, BlogHandle>, currently not used
-    tag_map: HashMap<String, TagHandle>, // map tag name to index of tag in tag vector
-    tags: Vec<Tag>,
-    blogs: Vec<Blog>,
-    tag_blog_map: HashMap<TagHandle, Vec<BlogHandle>>, // map tag handle to handles of blog referencing it
+    //blog_map: HashMap<String, BlogHandle>,              // currently not used
+    tag_map: HashMap<String, TagHandle>,                // map tag name to index of tag in tag vector
+    tags: Vec<Tag>,                                     // Follow the order of tags in tag file
+    blogs: Vec<Blog>,                                   // Follow the order of blog creation date
+    tag_blog_map: HashMap<TagHandle, Vec<BlogHandle>>,  // map tag handle to handles of blog referencing it
 }
 
 impl BlogClusters {
@@ -95,6 +99,7 @@ impl BlogClusters {
     // blog_mds: blog filename and blog content in markdown with metadata
     // PS: blog_name is used for checking if the title in the file is corresponding
     pub fn add_blogs(&mut self, blog_mds: &[(String, String)]) {
+        // Insert blogs to blog vector
         for (blog_path_title, blog) in blog_mds {
             let mut line_it = blog.lines();
 
@@ -144,9 +149,6 @@ impl BlogClusters {
             // Get the content part
             let content = parts.next().expect("Where is the content?").trim();
 
-            // Gen handle of current blog 
-            let blog_handle = self.blogs.len();
-
             self.blogs.push(
                 Blog::new(
                     time[0],
@@ -158,8 +160,17 @@ impl BlogClusters {
                     content.to_string()
                 )
             );
+        }
 
-            for tag_handle in tag_handles {
+        // Sort blog vector by time, from new to old
+        self.blogs.sort_by(|a, b| time_squash(b.year, b.month, b.day).cmp(&time_squash(a.year, a.month, a.day)));
+
+        // Map tag_handle-blog_handle pair
+        for (i, blog) in self.blogs.iter().enumerate() {
+            // Gen handle of current blog(just the index) 
+            let blog_handle = i;
+
+            for tag_handle in &blog.tags {
                 // We know this tag_handle is always valid
                 self.tag_blog_map.get_mut(&tag_handle)
                                  .unwrap()
@@ -196,6 +207,12 @@ impl BlogClusters {
 #[cfg(test)]
 mod blog_cluster_tests {
     use super::*;
+
+    #[test]
+    fn test_time_squashing() {
+        assert!(time_squash(2000u64, 9, 27) < time_squash(2001u64, 8, 13));
+        assert!(time_squash(2000u64, 9, 27) > time_squash(1997u64, 5, 27));
+    }
 
     #[test]
     fn test_tag_parsing() {
