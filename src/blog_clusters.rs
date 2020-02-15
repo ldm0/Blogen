@@ -93,49 +93,56 @@ impl BlogClusters {
 
     // Should call add_tags before calling this.
     // blog_mds: blog filename and blog content in markdown with metadata
+    // PS: blog_name is used for checking if the title in the file is corresponding
     pub fn add_blogs(&mut self, blog_mds: &[(String, String)]) {
-        // blog_name is used for checking if the title in the file is corresponding
         for (blog_path_title, blog) in blog_mds {
             let mut line_it = blog.lines();
+
             // First line is title
             let title = line_it.next().unwrap().trim();
-            // We need to ensure title in content is roughly the same as file name
-            // the path_title is only used for validation, the title stored is unprocessed.
-            assert_eq!(&path_title(title), &path_title(blog_path_title), "filename needs to be correspond to the article title");
 
-            // Second line is time: `2000/9/27`
-            let time: Vec<i64>          = line_it.next().unwrap()
-                                                .split('/')
-                                                .map(|x| x.trim().parse().expect("Time is not valid"))
-                                                .collect();
+            // We need to ensure title in content is roughly the same as file
+            // name. The path_title is only used for validation, the title
+            // stored is unprocessed.
+            assert_eq!(&path_title(title), &path_title(blog_path_title), "Incorrespondence between filename and title");
 
-            // Third line is tags: `aaa |  bbb |ccc`
-            let tag_names: Vec<&str>    = line_it.next().unwrap()
-                                                .split('|')
-                                                .map(|x| x.trim())
-                                                .collect();
-            let tag_handles: Vec<TagHandle>    = tag_names.into_iter()
-                                                .map(|x| *self.get_tag_handle(x).expect("tag name not present in tag file"))
-                                                .collect();
+            // Second line is time: `2000 / 9 / 27`
+            let time = line_it.next()
+                              .unwrap()
+                              .split('/')
+                              .map(|x| x.trim().parse().expect("Invalid time."))
+                              .collect::<Vec<i64>>();
+
+            assert_eq!(3, time.len(), "Invalid time format.");
+
+            // Third line is tags: `aaa | bbb | ccc | ...`
+            let tag_names = line_it.next()
+                                   .unwrap()
+                                   .split('|')
+                                   .map(|x| x.trim())   // permits arbitrary spaces between time and seperator
+                                   .collect::<Vec<&str>>();
+            let tag_handles = tag_names.into_iter()
+                                       .map(|x| *self.get_tag_handle(x).expect("Invalid tag name."))
+                                       .collect::<Vec<TagHandle>>();
 
             // Assme there is no "---" in article content.
             // Emmm.... This is not a legit assumption, we can change it later
             let mut parts = blog.split("---");
 
             // Assume there always three parts: 
-            // meta data
+            // Meta Data
             // ---
-            // preview
+            // Preview
             // ---
-            // content
+            // Content
 
             // Just ignore the metadata, because we have parsed it.
-            parts.next().expect("where is the meta data?");
-            // Allow wrapping white spaces in preview and content.
+            parts.next().expect("Where is the meta data?");
+            // Wrapping white spaces in preview and content is legal.
             // Get the preview part
-            let preview = parts.next().expect("where is the meta data?").trim();
+            let preview = parts.next().expect("Where is the preview?").trim();
             // Get the content part
-            let content = parts.next().expect("where is the content?").trim();
+            let content = parts.next().expect("Where is the content?").trim();
 
             // Gen handle of current blog 
             let blog_handle = self.blogs.len();
@@ -153,7 +160,7 @@ impl BlogClusters {
             );
 
             for tag_handle in tag_handles {
-                // We konw this tag is always valid
+                // We know this tag_handle is always valid
                 self.tag_blog_map.get_mut(&tag_handle)
                                  .unwrap()
                                  .push(blog_handle);
