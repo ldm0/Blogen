@@ -1,0 +1,220 @@
+
+<!--
+Stop checking the code! :-P
+These pages are powered by my own framework.
+You can easily get Source code from https://github.com/ldm0/Blogen
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>网页上的机器学习</title>
+        <link rel="shortcut icon" type="image/x-icon" href="./assets/favicon.ico">
+        <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
+        <link rel="stylesheet" type="text/css" href="./css/common.css">
+        <link rel="stylesheet" type="text/css" href="./css/blog.css">
+        <script defer src="./js/widget_fun.js"></script> 
+        <script> MathJax = {tex:{inlineMath:[['$', '$']]}} </script>
+        <script id="MathJax-script" async src="./js/tex-mml-chtml.js"></script>
+    </head>
+    <body>
+        <div id="widget_plate">
+            <div class="widget" id="widget_home_page">
+                <a href="./index.html">
+                    <img src="./assets/homepage.png" alt="homepage">
+                </a>
+            </div>
+            <div class="widget" id="widget_blog_cluster">
+                <!--blogs clustered by different tags-->
+                <a href="./cluster.html">
+                    <img src="./assets/cluster.png" alt="cluster">
+                </a>
+            </div>
+            <div class="widget" id="widget_fun">
+                <!--some fun demo-->
+                <a href="./fun.html">
+                    <img src="./assets/fun.png" alt="fun">
+                </a>
+                <canvas id="widget_fun_canvas"></canvas>
+            </div>
+        </div>
+        <div id="blog">
+            <div id="blog_title">
+                <h2>
+                    网页上的机器学习
+                </h2>
+            </div>
+            <div id="blog_time">
+                2020/2/22
+            </div>
+            <div id="blog_preview">
+                用 Rust 写了一个 Neural Network，编译成 WebAssembly，在网页上运行。
+            </div>
+            <div id="blog_content">
+                <p><a href="https://ldm0.xyz/wasm_nn.html">Live Demo</a><br />
+<a href="https://github.com/ldm0/wasm_nn">Source Code</a></p>
+<h3>这是什么</h3>
+<p>简介: 在网页上实现了一个可视化的全连接神经网络，用 Rust 编写，编译成 WebAssembly 部署。</p>
+<ol>
+<li>
+<p>工具链部分: Rust 编译至 WebAssembly，这部分与众不同的有两点</p>
+<ul>
+<li>矩阵计算部分使用了rust-ndarray，是 Python numpy库中的 ndarray 部分函数在 Rust 中的port，非常赞。</li>
+<li>写编译到 WebAssembly 的代码没有使用 wasm-bindgen，而是直接手写的 WebAssembly 接口，我觉得很干净。</li>
+</ul>
+</li>
+<li>
+<p>NN 部分: 由于只是一个多分类问题。网络非常简单，只有一层全连接层也就是只有两个矩阵（FC层加起来很简单，但是多几层CPU根本跑不动（超小声））</p>
+<ul>
+<li>网络是一层FC层 + ReLU + Softmax</li>
+<li>Loss 是 Cross Entropy 加上简单的 Regular Loss</li>
+<li>测试数据排布方法是来自于 CS231n 课程中的一个多分类问题的 Python 代码[1]，旋臂真的很帅啊！有种星系的感觉。</li>
+</ul>
+</li>
+</ol>
+<h3>为什么写这个</h3>
+<ol>
+<li>
+<p>这事还得从一只蝙蝠说起......（省略一万字）</p>
+</li>
+<li>
+<p>我挺想试试 Rust 和 WebAssembly 结合。最近天天写 Rust，而 WebAssembly 在我上上个学期中写 Electron App 的时候差点就用了，但是后来因为 Node 有 C++ Addon 就去写了C++ Addon。但我一直对 WebAssembly 心心念念。</p>
+</li>
+<li>
+<p>上学期在学校的实验室跟学长一起学了相当一段时间的<del>机器学习</del>巫术，写这个正好可以巩固一下我学过的但是过去、现在、将来都不会用到的相对底层的手写NN的手艺。</p>
+</li>
+</ol>
+<h3>怎么写的</h3>
+<p>从需求出发，既然需要实现一个可视化的神经网络的训练，而且要利用 WASM 的力量，那么就自然而然的把所有性能敏感的部分用 WASM 实现，可视化部分用一个 Canvas 就可以显示测试数据点以及当前的测试结果了。接下来选择编译到 WASM 的语言，用 C++ 写就显得很俗，使用 Rust 写就有点 Hack 的感觉了，所以使用了 Rust 以及配套的工具链。</p>
+<ol>
+<li>
+<p>Canvas渲染部分：</p>
+<ol>
+<li>对于画预测结果，canvas 有 64x64 的大小，如果在 WASM 中算出来然后交给 JavaScript 中一个一个画 pixel，性能可能会成为较大的问题，我不想 WASM 省下的可怜算力被几千个 draw call 直接埋没了，而且 WASM 传 array 出来是非常麻烦的，所以采用 Canvas serialize 成 pixel 数组然后传指针进 WASM 中交给 WASM 涂颜色比较合适。</li>
+<li>对于画数据点，之前写图形库的经验告诉我手写pixel画圆挺麻烦，一方面要十几行代码，令一方面对于边界情况处理没有js中处理的那么好，再一方面data points不会太多，一般大约只有几百个，所以采用传递画点的 JavaScript 的 callback 函数到 WASM 模块的方法比较合适。</li>
+</ol>
+</li>
+<li>
+<p>Neural Network 部分：采用和一般 Python 写机器学习的结构相似的结构，大约就是一个 Data Provider，一个 Network。由于是手写网络，所以 Network 部分还得手写一个 forward propagation、backward propagation 和一个 loss calculation。有 rust-ndarray 的助力，把我写过七八遍的 Python 代码 port 到 Rust 上是相对来说是很轻松的事情（相对，后面有吐槽）。BP算法这里就不推导了（写了一点，但是矩阵太多了我比较懒就放弃了），仅用对应的代码解释：</p>
+<ol>
+<li>
+<p>Weight 和 Bias：</p>
+<ul>
+<li>
+<p>前向传播：</p>
+<pre lang="rust"><code><span style="color:#b48ead;">let</span><span style="color:#4f5b66;"> act1 = &amp;points.</span><span style="color:#96b5b4;">dot</span><span style="color:#4f5b66;">(&amp;</span><span style="color:#bf616a;">self</span><span style="color:#4f5b66;">.w1) + &amp;</span><span style="color:#bf616a;">self</span><span style="color:#4f5b66;">.b1;
+</span><span style="color:#4f5b66;">...
+</span><span style="color:#b48ead;">let</span><span style="color:#4f5b66;"> act2 = &amp;fc_layer.</span><span style="color:#96b5b4;">dot</span><span style="color:#4f5b66;">(&amp;</span><span style="color:#bf616a;">self</span><span style="color:#4f5b66;">.w2) + &amp;</span><span style="color:#bf616a;">self</span><span style="color:#4f5b66;">.b2
+</span></code></pre>
+</li>
+<li>
+<p>反向传播：</p>
+<pre lang="rust"><code><span style="color:#b48ead;">let</span><span style="color:#4f5b66;"> dw2 = fc_layer.</span><span style="color:#96b5b4;">t</span><span style="color:#4f5b66;">().</span><span style="color:#96b5b4;">dot</span><span style="color:#4f5b66;">(&amp;dact2) + regular_rate * &amp;</span><span style="color:#bf616a;">self</span><span style="color:#4f5b66;">.w2;
+</span><span style="color:#b48ead;">let</span><span style="color:#4f5b66;"> db2 = dact2.</span><span style="color:#96b5b4;">sum_axis</span><span style="color:#4f5b66;">(Axis(</span><span style="color:#d08770;">0</span><span style="color:#4f5b66;">)).</span><span style="color:#96b5b4;">insert_axis</span><span style="color:#4f5b66;">(Axis(</span><span style="color:#d08770;">0</span><span style="color:#4f5b66;">));
+</span><span style="color:#b48ead;">let</span><span style="color:#4f5b66;"> dw1 = points.</span><span style="color:#96b5b4;">t</span><span style="color:#4f5b66;">().</span><span style="color:#96b5b4;">dot</span><span style="color:#4f5b66;">(&amp;dact1) + regular_rate * &amp;</span><span style="color:#bf616a;">self</span><span style="color:#4f5b66;">.w1;
+</span><span style="color:#b48ead;">let</span><span style="color:#4f5b66;"> db1 = dact1.</span><span style="color:#96b5b4;">sum_axis</span><span style="color:#4f5b66;">(Axis(</span><span style="color:#d08770;">0</span><span style="color:#4f5b66;">)).</span><span style="color:#96b5b4;">insert_axis</span><span style="color:#4f5b66;">(Axis(</span><span style="color:#d08770;">0</span><span style="color:#4f5b66;">));
+</span></code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>Cross Entropy：</p>
+<ul>
+<li>
+<p>前向传播：</p>
+<pre lang="rust"><code><span style="color:#b48ead;">let</span><span style="color:#4f5b66;"> exp_scores = scores.</span><span style="color:#96b5b4;">mapv</span><span style="color:#4f5b66;">(</span><span style="color:#b48ead;">f32</span><span style="color:#4f5b66;">::exp);
+</span><span style="color:#b48ead;">let</span><span style="color:#4f5b66;"> softmax = &amp;exp_scores / &amp;exp_scores.</span><span style="color:#96b5b4;">sum_axis</span><span style="color:#4f5b66;">(Axis(</span><span style="color:#d08770;">1</span><span style="color:#4f5b66;">)).</span><span style="color:#96b5b4;">insert_axis</span><span style="color:#4f5b66;">(Axis(</span><span style="color:#d08770;">1</span><span style="color:#4f5b66;">));
+</span></code></pre>
+</li>
+<li>
+<p>反向传播：</p>
+<pre lang="rust"><code><span style="color:#b48ead;">let mut</span><span style="color:#4f5b66;"> dscores = softmax.</span><span style="color:#96b5b4;">clone</span><span style="color:#4f5b66;">();
+</span><span style="color:#b48ead;">for </span><span style="color:#4f5b66;">(i, </span><span style="color:#b48ead;">mut</span><span style="color:#4f5b66;"> dscore) in dscores.</span><span style="color:#96b5b4;">axis_iter_mut</span><span style="color:#4f5b66;">(Axis(</span><span style="color:#d08770;">0</span><span style="color:#4f5b66;">)).</span><span style="color:#96b5b4;">enumerate</span><span style="color:#4f5b66;">() {
+</span><span style="color:#4f5b66;">    dscore[[labels[[i]] as </span><span style="color:#b48ead;">usize</span><span style="color:#4f5b66;">]] -= </span><span style="color:#d08770;">1</span><span style="color:#b48ead;">f32</span><span style="color:#4f5b66;">;
+</span><span style="color:#4f5b66;">}
+</span><span style="color:#4f5b66;">dscores /= num_data as </span><span style="color:#b48ead;">f32</span><span style="color:#4f5b66;">;
+</span><span style="color:#b48ead;">let</span><span style="color:#4f5b66;"> dact2 = dscores;
+</span></code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>ReLU：</p>
+<ul>
+<li>
+<p>前向传播</p>
+<pre lang="rust"><code><span style="color:#b48ead;">let</span><span style="color:#4f5b66;"> fc_layer = act1.</span><span style="color:#96b5b4;">mapv</span><span style="color:#4f5b66;">(|</span><span style="color:#bf616a;">x</span><span style="color:#4f5b66;">| x.</span><span style="color:#96b5b4;">max</span><span style="color:#4f5b66;">(</span><span style="color:#d08770;">0</span><span style="color:#b48ead;">f32</span><span style="color:#4f5b66;">));
+</span></code></pre>
+</li>
+<li>
+<p>反向传播</p>
+<pre lang="rust"><code><span style="color:#b48ead;">let</span><span style="color:#4f5b66;"> dfc_layer = dact2.</span><span style="color:#96b5b4;">dot</span><span style="color:#4f5b66;">(&amp;</span><span style="color:#bf616a;">self</span><span style="color:#4f5b66;">.w2.</span><span style="color:#96b5b4;">t</span><span style="color:#4f5b66;">());
+</span><span style="color:#b48ead;">let mut</span><span style="color:#4f5b66;"> dact1 = dfc_layer.</span><span style="color:#96b5b4;">clone</span><span style="color:#4f5b66;">();
+</span><span style="color:#4f5b66;">Zip::from(&amp;</span><span style="color:#b48ead;">mut</span><span style="color:#4f5b66;"> dact1)
+</span><span style="color:#4f5b66;">    .</span><span style="color:#96b5b4;">and</span><span style="color:#4f5b66;">(fc_layer)
+</span><span style="color:#4f5b66;">    .</span><span style="color:#96b5b4;">apply</span><span style="color:#4f5b66;">(|</span><span style="color:#bf616a;">act1</span><span style="color:#4f5b66;">, &amp;</span><span style="color:#bf616a;">fc</span><span style="color:#4f5b66;">| {
+</span><span style="color:#4f5b66;">        </span><span style="color:#b48ead;">if</span><span style="color:#4f5b66;"> fc == </span><span style="color:#d08770;">0</span><span style="color:#b48ead;">f32 </span><span style="color:#4f5b66;">{
+</span><span style="color:#4f5b66;">            *act1 = </span><span style="color:#d08770;">0</span><span style="color:#b48ead;">f32</span><span style="color:#4f5b66;">;
+</span><span style="color:#4f5b66;">        }
+</span><span style="color:#4f5b66;">    });
+</span></code></pre>
+</li>
+</ul>
+</li>
+</ol>
+</li>
+</ol>
+<h3>吐槽</h3>
+<ul>
+<li>
+<p>由于 data generation 需要使用随机数，如果是 C++ 的话手写一个 LCG 简单高效，但是 Rust 中 rust-ndarray 里面 <code>random_using</code> 函数需要一个实现 rand_core 中的 <code>SeedableRng</code> trait 的参数，所以手写没有那么容易，就使用了一些随机数的库。使用 ndarray-rand 这个库的时候 random 总会在运行的时候 panic，这个让我 debug 了很久，后来找到原因居然是 random 使用了 <code>thread_rng</code> 然而 WASM 不支持多线程（其实是支持的[2]，但是使用不够方便）。</p>
+</li>
+<li>
+<p>rust-ndarray 的文档虽然有那么一点用，但是要用到的东西永远查不到，很多时候还得翻源码找没有文档的函数。如果有大佬能一小时把 rust-ndarray 的 API 们用会，请 Email 我接受膜拜。之后如果有时间我也会给这个库发几个 PR。</p>
+</li>
+<li>
+<p>由于是 WASM，全局变量需要加 Mutex，<code>cargo test</code> 的时候的默认多线程。对于这个库如果按照正常流程运行是不会出现死锁的，但是 test 的时候对于一个函数会调用多次，这些调用之间会死锁。解决方案有两种:</p>
+<ol>
+<li><code>cargo test -- --test-threads 1</code> 或者 <code>set RUST_TEST_THREADS=1</code></li>
+<li>把所有一个函数中用到的 data 放在一起用 Mutex 包裹</li>
+</ol>
+<p>我使用的方法是把所有的全局变量全部放到一个 tuple struct 中然后用 Mutex 包裹，这在我的需求下不影响性能。</p>
+<pre lang="rust"><code><span style="color:#b48ead;">struct </span><span style="color:#4f5b66;">CriticalSection(MetaData, Data, Network);
+</span><span style="color:#4f5b66;">
+</span><span style="color:#4f5b66;">lazy_static! {
+</span><span style="color:#4f5b66;">    </span><span style="color:#b48ead;">static ref </span><span style="color:#d08770;">DATA</span><span style="color:#4f5b66;">: Mutex&lt;CriticalSection&gt; = Mutex::default();
+</span><span style="color:#4f5b66;">}
+</span></code></pre>
+</li>
+<li>
+<p>上面的解决引出了另一个问题，我严重怀疑是 Rust 编译器的 bug。我写了这么一个解构赋值（Destructuring assignment）的语句，略微有点复杂（？）</p>
+<pre lang="rust"><code><span style="color:#b48ead;">let ref mut</span><span style="color:#4f5b66;"> CriticalSection(metadata, data, network) = *</span><span style="color:#d08770;">DATA</span><span style="color:#4f5b66;">.</span><span style="color:#96b5b4;">lock</span><span style="color:#4f5b66;">().</span><span style="color:#96b5b4;">unwrap</span><span style="color:#4f5b66;">();
+</span></code></pre>
+<p>这在当前最新的 rustc （1.43.0-nightly）中会报错，然后就我改写成下面的形式就可以过了。</p>
+<pre lang="rust"><code><span style="color:#b48ead;">let ref mut</span><span style="color:#4f5b66;"> tmp = *</span><span style="color:#d08770;">DATA</span><span style="color:#4f5b66;">.</span><span style="color:#96b5b4;">lock</span><span style="color:#4f5b66;">().</span><span style="color:#96b5b4;">unwrap</span><span style="color:#4f5b66;">();
+</span><span style="color:#b48ead;">let</span><span style="color:#4f5b66;"> CriticalSection(metadata, data, network) = tmp;
+</span></code></pre>
+</li>
+<li>
+<p>Rust - WebAssembly 结合的教程（包括官方的教程 [3]）我看到基本上都是使用 wasm-pack，且用了 npm 和 nodejs 引入了一些胶水代码。我很气愤，一个入门教程应当是简洁清晰无依赖的。我仅仅找到了几个 Zero Dependency 的教程 [4][5]，但是都有各种各样的问题，最后自己一点点摸索出来了 glue code，如果读者需要的话可以看一下 GitHub 的源码。我是通过 Google <code>rust wasm without</code> 这样的关键词组合找到这些教程的。</p>
+</li>
+</ul>
+<h3>引用</h3>
+<p>[1] Stanford CS231n class <a href="http://cs231n.github.io/neural-networks-case-study/">http://cs231n.github.io/neural-networks-case-study/</a></p>
+<p>[2] WASM thread support <a href="https://developers.google.com/web/updates/2018/10/wasm-threads">https://developers.google.com/web/updates/2018/10/wasm-threads</a></p>
+<p>[3] Rust And Assembly 官方教程 <a href="https://rustwasm.github.io/book/game-of-life/setup.html">https://rustwasm.github.io/book/game-of-life/setup.html</a></p>
+<p>[4] 一个远古的 Rust 部署 WebAssembly 的教程（记得它的js代码是有坑的所以我没使用，可我忘记坑是什么了，但这篇思路是正确的） <a href="https://www.reddit.com/r/rust/comments/9t95fd/howto_setting_up_webassembly_on_stable_rust/">https://www.reddit.com/r/rust/comments/9t95fd/howto_setting_up_webassembly_on_stable_rust/</a></p>
+<p>[5] 一个现代的 Rust 部署 WebAssembly 教程（我也忘记它是不是正确的了，但是我的部署方法一定是对的 XD） <a href="https://dev.to/dandyvica/wasm-in-rust-without-nodejs-2e0c">https://dev.to/dandyvica/wasm-in-rust-without-nodejs-2e0c</a></p>
+
+            </div>
+            <div id="blog_tags">
+                
+
+                <div class="tag">Rust</div>
+                <div class="tag">WebAssembly</div>
+                <div class="tag">Machine Learning</div>
+                <div class="tag">Math</div>
+
+            </div>
+        </div>
+    </body>
+</html>

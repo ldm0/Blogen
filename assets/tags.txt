@@ -4,8 +4,19 @@ I am a rustcean!
 C++
 Yeah, it's difficult.
 
+C
+Golden age.
+
 Delphi
-The stone age.
+Stone age.
+
+WebAssembly
+Punch Java, please.
+
+Latex
+The elegant and ugly thing.
+
+
 
 Math
 I love using math tools to solve problems.
@@ -16,8 +27,13 @@ Computer Graphics techniques.
 Programming
 Programming skills and knowledges.
 
+Machine Learning
+A kind of tech powered by magic.
+
 Computer Science
 Things about science of computer, mostly algorithm and compiler principles.
+
+
 
 Work
 What I devote to.
@@ -25,14 +41,13 @@ What I devote to.
 Life
 Thoughts and things about life.
 
+
 English
 This article is written in English.
 
 Chinese
 This article is written in Chinese.
 
-Latex
-The elegant and ugly thing.
 
 Test
 This article is used for testing.
