@@ -42,3 +42,5 @@ TODO:
 + [x] LaTeX
 + [x] Code highlighting
 + [x] Blog sort by time
++ [ ] LaTeX Scrolling
++ [ ] LaTeX display block
