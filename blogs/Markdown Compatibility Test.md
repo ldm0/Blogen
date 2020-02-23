@@ -51,6 +51,10 @@ Github Flavored Markdown:
     | YES | IT | IS ! |
     | Right align | Middle align | Left align! |
 
++ A Deleted text?
+
+    ~~text~~
+
 An embedded Latex?
 
 Hmm embedded Latex may not working, I knew it.  
