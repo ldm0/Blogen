@@ -1,3 +1,4 @@
+#![feature(or_patterns)]
 /**
  * Auto matically convert raw markdown blogs to my serveral blog web pages
  */

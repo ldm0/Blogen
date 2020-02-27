@@ -71,39 +71,117 @@ const NEEDS_ESCAPE : [bool; 256] = [
 ];
 
 // With markdown as input, this function returns content with latex replaced by
-// mark and array of latex extracted.
+// mark and array of latex extracted. Currently we don't need to distingiush
+// block latex and inline latex, the metadata is stored with the string, here we
+// kept the wrapping `$`, for inline latex number is `$` is 2, for block latex
+// it's 4. And the second problem is if we should use Vec<u8> rather than String
+// to represent each LaTeX part. The answer is no. We should use String to keep
+// the information that this LaTeX part is valid UTF-8.
 pub fn extract_latex(s: &str) -> (String, Vec<String>) {
     // Assume `$` pairs in a line as latex code fence.
     let s = s.as_bytes();
-    let mut result = Vec::with_capacity(s.len());
+    let mut new_s = Vec::with_capacity(s.len());
     let mut latexes = Vec::new();
 
-    let mut begin = 0;
-    let mut in_latex = false;
+    let mut state = 0;
+
+    let mut ptr = 0;
+    /* Here is an automaton for latex extraction
+     * State Transition Graph:
+     * L: Line break: `\r`, `\n`
+     * $: Dollar sign 
+     * o: Other chars
+     * If `o` is not set for specific state, we can ensure any other chars won't change this state.
+     * ```
+     * +-+--$->+-+     +-+
+     * |2|     |0|<-L--|5|
+     * +-+--L->+-+     +-+
+     * A      A|AA      A 
+     * |      //||      | 
+     * |     // $\      o 
+     * o    L/   \L     | 
+     * |   //     \\    | 
+     * |  //       \\   | 
+     * | //         \\  | 
+     * ||$           \\ | 
+     * |||            \\| 
+     * ||V            ||| 
+     * +-+     +-+     +-+
+     * |1|--$->|3|--$->|4|
+     * +-+     +-+     +-+
+     * ```
+     */
     for (i, &byte) in s.iter().enumerate() {
-        match byte {
-            b'$' => {
-                if in_latex {
-                    result.extend(LATEX_MARK);
-                    let latex_bytes = s[begin..=i].to_vec();
-                    let latex = unsafe { String::from_utf8_unchecked(latex_bytes) };
-                    latexes.push(latex);
-                    begin = i + 1;
-                    in_latex = false;
-                } else {
-                    result.extend(&s[begin..i]);
-                    begin = i;
-                    in_latex = true;
+        match state {
+            0 => {
+                // optimize to if at last
+                match byte {
+                    b'$' => {
+                        state = 1;
+                        new_s.extend(&s[ptr..i]);
+                        ptr = i;
+                    }
+                    _ => (),
                 }
             }
-            b'\r' | b'\n' => {
-                in_latex = false;
+            1 => {
+                match byte {
+                    b'$' => state = 3,
+                    b'\r' | b'\n' => state = 0,
+                    _ => state = 2,
+                }
             }
-            _ => ()
+            2 => {
+                match byte {
+                    b'$' => {
+                        state = 0;
+                        new_s.extend(LATEX_MARK);
+                        latexes.push(unsafe {
+                            String::from_utf8_unchecked(s[ptr..=i].to_vec())
+                        });
+                        ptr = i + 1;
+                    }
+                    // This is the error state, here we don't recover, instead
+                    // we only escape to next line. Why we need the `\r` check?
+                    // My special thank to Apple and Microsoft -_-
+                    b'\r' | b'\n' => state = 0,
+                    _ => (),
+                }
+            }
+            3 => {
+                match byte {
+                    b'$' => state = 4,
+                    _ => (),
+                }
+            }
+            4 => {
+                match byte {
+                    b'$' => {
+                        state = 0;
+                        new_s.extend(LATEX_MARK);
+                        latexes.push(unsafe {
+                            String::from_utf8_unchecked(s[ptr..=i].to_vec())
+                        });
+                        ptr = i + 1;
+                    }
+                    b'\r' | b'\n' => state = 0,
+                    _ => state = 5,
+                }
+            }
+            // 5 is the error state, we only want to meet a linebreak then we will forget the error
+            5 => {
+                match byte {
+                    // Here we recover from the error state
+                    b'\r' | b'\n' => state = 0,
+                    _ => (),
+                }
+            }
+            _ => unreachable!()
         }
     }
-    result.extend(&s[begin..]);
-    (unsafe { String::from_utf8_unchecked(result) }, latexes)
+    new_s.extend(&s[ptr..]);
+
+    (unsafe { String::from_utf8_unchecked(new_s) }, latexes)
 }
 
 // Replace marks in string given with latexes given. If latexes given more than
@@ -411,7 +489,7 @@ mod template_tests{
     }
 
     #[test]
-    fn test_latex_extraction() {
+    fn test_inline_latex_extraction() {
         let s = "
             hi $I'm latex0$ alice
             hi $I'm latex1$ bob
@@ -430,7 +508,29 @@ mod template_tests{
     }
 
     #[test]
-    fn test_latex_insertion() {
+    fn test_block_latex_extraction() {
+        let s = "
+            hi $$I'm latex0$$ alice
+            hi $$I'm latex1 bob
+            hahah$$
+            hi $$I'm a failed latex$
+            hi $$I'm latex2$$ $I'm not latex
+            hi $$I'm latex3$$ alice hi $$I'm latex4$$ bob
+        ";
+        let (_, latexes) = extract_latex(s);
+        assert_eq!(latexes, [
+            "$$I'm latex0$$",
+            "$$I'm latex1 bob
+            hahah$$",
+            "$$I'm latex2$$",
+            "$$I'm latex3$$",
+            "$$I'm latex4$$",
+        ]);
+    }
+
+
+    #[test]
+    fn test_inline_latex_insertion() {
         let mark: &str = unsafe {
             &String::from_utf8_unchecked(LATEX_MARK.to_vec())
         };
@@ -442,6 +542,23 @@ mod template_tests{
         };
         let s = ["a", mark, "b", mark, "c"].join("");
         let latexes = vec![String::from("$Alice$"), String::from("$Bob$")];
+        let s = insert_latex(&s, &latexes);
+        assert_eq!(s, Some(["a", begin, &latexes[0], end, "b", begin, &latexes[1], end, "c"].join("")));
+    }
+
+    #[test]
+    fn test_block_latex_insertion() {
+        let mark: &str = unsafe {
+            &String::from_utf8_unchecked(LATEX_MARK.to_vec())
+        };
+        let begin: &str = unsafe {
+            &String::from_utf8_unchecked(LATEX_TAG_BEGIN.to_vec())
+        };
+        let end: &str = unsafe {
+            &String::from_utf8_unchecked(LATEX_TAG_END.to_vec())
+        };
+        let s = ["a", mark, "b", mark, "c"].join("");
+        let latexes = vec![String::from("$$Ali\nce$$"), String::from("$$Bob$$")];
         let s = insert_latex(&s, &latexes);
         assert_eq!(s, Some(["a", begin, &latexes[0], end, "b", begin, &latexes[1], end, "c"].join("")));
     }
