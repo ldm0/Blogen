@@ -5,12 +5,17 @@
 mod tag;
 mod blog;
 mod blog_clusters;
-mod template;
+mod template_blog;
+mod template_cluster;
+mod template_homepage;
 mod hlf_parser;
 mod shared;
 
 use blog_clusters::BlogClusters;
-use template::{BlogTemplate, HomepageTemplate, ClusterTemplate, HTMLTemplate};
+use shared::HTMLTemplate;
+use template_blog::BlogTemplate;
+use template_cluster::ClusterTemplate;
+use template_homepage::HomepageTemplate;
 use lazy_static::lazy_static;
 
 

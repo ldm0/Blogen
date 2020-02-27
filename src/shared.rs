@@ -1,39 +1,14 @@
-/* Use paths in environment args rather than hard-code path
-#[macro_export]
-macro_rules! ASSET_PATH {
-    () => {"assets/"};
-    ($x:literal) => {concat!(ASSET_PATH!(), $x)};
-    ($x:expr) => {ASSET_PATH!().to_string() + $x};
-}
+use crate::blog_clusters::BlogClusters;
 
-#[macro_export]
-macro_rules! BLOG_PATH {
-    () => {"blogs/"};
-    ($x:literal) => {concat!(BLOG_PATH!(), $x)};
-    ($x:expr) => {BLOG_PATH!().to_string() + $x};
-}
+// Implemented by templates
+pub trait HTMLTemplate {
+    // Try to load html template from string
+    fn load(template_raw: &str) -> Result<Self, String>
+        where Self: std::marker::Sized;
 
-#[macro_export]
-macro_rules! BLOG_FOLDER {
-    () => {""};
-    ($x:literal) => {concat!(BLOG_FOLDER!(), $x)};
-    ($x:expr) => {BLOG_FOLDER!().to_string() + $x};
+    // Return file name and file content
+    fn fill(&self, blog_clusters: &BlogClusters) -> Vec<(String, String)>;
 }
-
-#[macro_export]
-macro_rules! HOMEPAGE_FOLDER {
-    () => {""};
-    ($x:literal) => {concat!(HOMEPAGE_FOLDER!(), $x)};
-    ($x:expr) => {HOMEPAGE_FOLDER!().to_string() + $x};
-}
-
-#[macro_export]
-macro_rules! OUTPUT_PATH {
-    () => {"output/"};
-    ($x:literal) => {concat!(HOMEPAGE_OUTPUT_PATH!(), $x)};
-    ($x:expr) => {OUTPUT_PATH!().to_string() + $x};
-}
-*/
 
 // Fit average blog titles in webpage path. Used for path/filename generation
 // from blog.title and consistency check between content title and file title.
@@ -51,6 +26,7 @@ pub fn path_title(title: &str) -> String {
     }
     path_title
 }
+
 
 #[cfg(test)]
 mod shared_tests {
