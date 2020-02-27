@@ -10,6 +10,7 @@ use parsing::SyntaxSet;
 use highlighting::ThemeSet;
 use easy::HighlightLines;
 use util::LinesWithEndings;
+use lazy_static::lazy_static;
 
 use crate::blog_clusters::BlogClusters;         // for template filling
 // for code block unescaping, homepage template filling 

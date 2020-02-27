@@ -2,9 +2,6 @@
  * Auto matically convert raw markdown blogs to my serveral blog web pages
  */
 
-#[macro_use]
-extern crate lazy_static;
-
 mod tag;
 mod blog;
 mod blog_clusters;
@@ -14,6 +11,8 @@ mod shared;
 
 use blog_clusters::BlogClusters;
 use template::{BlogTemplate, HomepageTemplate, ClusterTemplate, HTMLTemplate};
+use lazy_static::lazy_static;
+
 
 // for directory iteration, template read, result write
 use std::fs;
