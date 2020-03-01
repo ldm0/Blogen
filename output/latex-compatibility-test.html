@@ -12,6 +12,7 @@ You can easily get Source code from https://github.com/ldm0/Blogen
         <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
         <link rel="stylesheet" type="text/css" href="./css/common.css">
         <link rel="stylesheet" type="text/css" href="./css/blog.css">
+        <script defer src="./js/widget_fun.js"></script>
         <script> 
             MathJax = {
                 tex: {
@@ -81,22 +82,13 @@ You can easily get Source code from https://github.com/ldm0/Blogen
 <li>而这些性质在计算的时候运用一些神奇的技巧的话会有神奇加速效用
 <ol>
 <li>对于<div class="latex">$A(x)=a_0 + a_1*x^1 + a_2*x^2 + ... + a_{n-1}*x^{n-1}$</div>，我们进行奇偶分组，得到:
-<ul>
-<li><div class="latex">$A(x)=(a_0 + a_2*x^2 + a_4*x^4 + ... + a_{n-2}*x^{n-2}) + (a_1*x^1 + a_3*x^3 + a_5*x^5 + ... + a_{n-1}*x^{n-1})$</div></li>
-<li><div class="latex">$A(x)=(a_0 + a_2*x^2 + a_4*x^4 + ... + a_{n-2}*x^{n-2}) + x * (a_1 + a_3*x^2 + a_5*x^4 + ... + a_{n-1}*x^{n-2})$</div></li>
-</ul>
-</li>
+<div class="latex">$$A(x)=(a_0 + a_2*x^2 + a_4*x^4 + ... + a_{n-2}*x^{n-2}) + (a_1*x^1 + a_3*x^3 + a_5*x^5 + ... + a_{n-1}*x^{n-1})$$</div>
+<div class="latex">$$A(x)=(a_0 + a_2*x^2 + a_4*x^4 + ... + a_{n-2}*x^{n-2}) + x * (a_1 + a_3*x^2 + a_5*x^4 + ... + a_{n-1}*x^{n-2})$$</div></li>
 <li>令
-<ul>
-<li><div class="latex">$A1(x)=(a_0 + a_2*x^1 + a_4*x^2 + ... + a_{n-2}*x^{\frac{n-2}{2}})$</div></li>
-<li><div class="latex">$A2(x)=(a_1 + a_3*x^1 + a_5*x^2 + ... + a_{n-1}*x^{\frac{n-2}{2}})$</div></li>
-</ul>
-</li>
+<div class="latex">$$A1(x)=(a_0 + a_2*x^1 + a_4*x^2 + ... + a_{n-2}*x^{\frac{n-2}{2}})$$</div>
+<div class="latex">$$A2(x)=(a_1 + a_3*x^1 + a_5*x^2 + ... + a_{n-1}*x^{\frac{n-2}{2}})$$</div></li>
 <li>我们得到:
-<ul>
-<li><div class="latex">$A(x) = A1(x^2) + x*A2(x^2)$</div></li>
-</ul>
-</li>
+<div class="latex">$$A(x) = A1(x^2) + x*A2(x^2)$$</div></li>
 <li>由前面介绍的两个性质，通过计算得到如下的两个等式：
 <ul>
 <li>当<div class="latex">$0&lt;k&lt;\frac{n}{2}-1$</div>时，有
@@ -125,15 +117,9 @@ You can easily get Source code from https://github.com/ldm0/Blogen
 <ol>
 <li>之前我们知道系数数组并通过计算得到了点值数组<div class="latex">$(A(\omega_n^0),A(\omega_n^1),A(\omega_n^2),...,A(\omega_n^{n-1}))$</div>，现在我们是要通过点值数组来反推系数数组。</li>
 <li>构造如下多项式:
-<ul>
-<li><div class="latex">$F(x)=d_0+d_1*x^1 + d_2*x^2+...+d_{n-1}*x^{n-1}$</div></li>
-</ul>
-</li>
+<div class="latex">$$F(x)=d_0+d_1*x^1 + d_2*x^2+...+d_{n-1}*x^{n-1}$$</div></li>
 <li>我们使用<div class="latex">$(\omega_n^{-0}, \omega_n^{-1}, \omega_n^{-2},..., \omega_n^{-n+1})$</div>代入，可以证明的是，得到的正好是如下结果：
-<ul>
-<li><div class="latex">$(n*a_0, n * a_1, n*a_2,...,n*a_{n-1})$</div></li>
-</ul>
-</li>
+<div class="latex">$$(n*a_0, n * a_1, n*a_2,...,n*a_{n-1})$$</div></li>
 <li>最后，我们只要将结果乘以<div class="latex">$\frac{1}{n}$</div>，就得到了我们想要的系数数组：<div class="latex">$(a_0, a_1, a_2,...,a_{n-1})$</div></li>
 </ol>
 </li>
