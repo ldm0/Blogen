@@ -97,16 +97,14 @@ pub fn extract_latex(s: &str) -> (String, Vec<String>) {
      */
     for (i, &byte) in s.iter().enumerate() {
         match state {
-            0 => {
-                match byte {
-                    b'$' => {
-                        state = 1;
-                        new_s.extend(&s[ptr..i]);
-                        ptr = i;
-                    }
-                    _ => (),
+            0 => match byte {
+                b'$' => {
+                    state = 1;
+                    new_s.extend(&s[ptr..i]);
+                    ptr = i;
                 }
-            }
+                _ => (),
+            },
             1 => match byte {
                 b'$' => state = 3,
                 b'\r' | b'\n' => state = 0,
@@ -249,12 +247,11 @@ pub fn html_escape(s: &str) -> String {
 // Transform several frequently used markdown code annotation to file extension
 pub fn lang2ext(lang: &str) -> &str {
     match lang {
+        // Syntect have no ebnf syntax highlighting support :-/
         "cpp" | "c++" | "cxx" => "cpp",
         "rust" => "rs",
         "pascal" => "pas",
-        "ebnf" // Syntect have no ebnf syntax highlighting support :-/
-        | "" => "txt",
-         
+        "ebnf" | "" => "txt",
         _ => lang,
     }
 }
