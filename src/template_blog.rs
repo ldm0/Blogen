@@ -3,13 +3,14 @@ use comrak::{markdown_to_html, ComrakOptions};
 use regex::Regex;
 use std::collections::HashMap;
 
-use easy::HighlightLines;
-use highlighting::ThemeSet;
-use html::{append_highlighted_html_for_styled_line, IncludeBackground};
 use lazy_static::lazy_static;
-use parsing::SyntaxSet;
-use syntect::{easy, highlighting, html, parsing, util};
-use util::LinesWithEndings;
+use syntect::{
+    easy::HighlightLines,
+    highlighting::ThemeSet,
+    html::{append_highlighted_html_for_styled_line, IncludeBackground},
+    parsing::SyntaxSet,
+    util::LinesWithEndings,
+};
 
 use crate::blog_clusters::BlogClusters;
 use crate::hlf_parser::{parse, HlfLhs, HlfRhs, Symbol};
