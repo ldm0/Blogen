@@ -31,27 +31,13 @@ const LATEX_MARK: &[u8; 9] = b"lAtExhERE";
 const LATEX_MARK_LEN: usize = LATEX_MARK.len();
 const LATEX_TAG_BEGIN: &[u8; 19] = br#"<div class="latex">"#;
 const LATEX_TAG_END: &[u8; 6] = b"</div>";
-const NEEDS_ESCAPE: [bool; 256] = [
-    false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false, true, false, false, false, true, true,
-    false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, true, false, true, false, false, false, false,
-    false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false,
+
+const ESCAPE_TABLE: [(&[u8], u8); 5] = [
+    (b"&quot;", b'"'),
+    (b"&amp;", b'&'),
+    (b"&#39;", b'\''),
+    (b"&lt;", b'<'),
+    (b"&gt;", b'>'),
 ];
 
 // With markdown as input, this function returns content with latex replaced by
@@ -139,7 +125,7 @@ pub fn extract_latex(s: &str) -> (String, Vec<String>) {
                 b'\r' | b'\n' => state = 0,
                 _ => state = 5,
             },
-            // 5 is the error state, we only want to meet a linebreak then we will forget the error
+            // 5 is the error state, we only want to meet a line break then we will forget the error
             5 => {
                 match byte {
                     // Here we recover from the error state
@@ -189,58 +175,66 @@ pub fn insert_latex(s: &str, latexes: &Vec<String>) -> Option<String> {
 }
 
 // This is used for unescape html
-pub fn html_unescape(s: &str) -> String {
-    let s_len = s.len();
-    let mut begin = 0;
-    let s = s.as_bytes();
-    let mut result = Vec::with_capacity(s_len);
-    for (i, &ch) in s.iter().enumerate() {
-        if ch == b'&' {
-            let (offset, ch) = if s.get(i + 1..=i + 5) == Some(b"quot;") {
-                (6, b'"')
-            } else if s.get(i + 1..=i + 4) == Some(b"amp;") {
-                (5, b'&')
-            } else if s.get(i + 1..=i + 4) == Some(b"#39;") {
-                (5, b'\'')
-            } else if s.get(i + 1..=i + 3) == Some(b"lt;") {
-                (4, b'<')
-            } else if s.get(i + 1..=i + 3) == Some(b"gt;") {
-                (4, b'>')
-            } else {
-                (0, 0)
-            };
-            if offset > 0 {
-                result.extend(&s[begin..i]);
-                result.push(ch);
-                begin = i + offset;
-            }
-        }
-    }
+pub fn html_unescape<T: AsRef<str>>(s: T) -> String {
+    let s = s.as_ref().as_bytes();
+
+    let (begin, mut result) = (0..s.len()).fold(
+        (0, Vec::with_capacity(s.len())),
+        |(mut begin, mut result), i| {
+            // unescape process
+            ESCAPE_TABLE
+                .iter()
+                .filter_map(|(before, after)| {
+                    s.get(i..i + before.len()).and_then(|range| {
+                        if &range == before {
+                            Some((before.len(), after))
+                        } else {
+                            None
+                        }
+                    })
+                })
+                .next()
+                .map(|(offset, after)| {
+                    result.extend(&s[begin..i]);
+                    result.push(*after);
+                    begin = i + offset;
+                });
+            (begin, result)
+        },
+    );
+    // Append the tail
     result.extend(&s[begin..]);
     // The input is &str so we can ensure there is no surprise.
     unsafe { String::from_utf8_unchecked(result) }
 }
 
-pub fn html_escape(s: &str) -> String {
-    let s = s.as_bytes();
-    let mut offset = 0;
-    let mut result = Vec::with_capacity(s.len());
-    for (i, &byte) in s.iter().enumerate() {
-        if NEEDS_ESCAPE[byte as usize] {
-            let esc: &[u8] = match byte {
-                b'"' => b"&quot;",
-                b'\'' => b"&#39;",
-                b'&' => b"&amp;",
-                b'<' => b"&lt;",
-                b'>' => b"&gt;",
-                _ => unreachable!(),
-            };
-            result.extend(&s[offset..i]);
-            result.extend(esc);
-            offset = i + 1;
-        }
-    }
-    result.extend(&s[offset..]);
+pub fn html_escape<T: AsRef<str>>(s: T) -> String {
+    let s = s.as_ref().as_bytes();
+
+    let (begin, mut result) = s.iter().enumerate().fold(
+        (0, Vec::with_capacity(s.len())),
+        |(mut begin, mut result), (i, byte)| {
+            ESCAPE_TABLE
+                .iter()
+                .filter_map(
+                    |(before, after)| {
+                        if byte == after {
+                            Some(before)
+                        } else {
+                            None
+                        }
+                    },
+                )
+                .next()
+                .map(|&before| {
+                    result.extend(&s[begin..i]);
+                    result.extend(before);
+                    begin = i + 1;
+                });
+            (begin, result)
+        },
+    );
+    result.extend(&s[begin..]);
     unsafe { String::from_utf8_unchecked(result) }
 }
 
@@ -299,6 +293,7 @@ impl HTMLTemplate for BlogTemplate {
         }
         Ok(Self { hlfs: hlfs })
     }
+
     fn fill(&self, cluster: &BlogClusters) -> Vec<(String, String)> {
         let mut results = Vec::new();
 
