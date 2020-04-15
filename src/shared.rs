@@ -13,18 +13,30 @@ pub trait HTMLTemplate {
 
 // Fit average blog titles in webpage path. Used for path/filename generation
 // from blog.title and consistency check between content title and file title.
-pub fn path_title(title: &str) -> String {
+pub fn path_title<T: AsRef<str>>(title: T) -> String {
     // to lowercase and replace empty space to dash
-    let mut path_title = String::new();
-    for i in title.trim().to_ascii_lowercase().replace(" ", "-").chars() {
-        match i {
-            '~' | '!' | '@' | '#' | '$' | '%' | '^' | '&' | '*' | '(' | ')' | '{' | '}' | '|'
-            | ':' | '"' | '<' | '>' | '?' | '[' | ']' | '\\' | ';' | '\'' | ',' | '.' | '/'
-            | '=' => (),
-            _ => path_title.push(i),
-        }
-    }
-    path_title
+    title
+        .as_ref()
+        .trim()
+        .chars()
+        .fold(String::new(), |mut path, ch| {
+            let ch = if ch.is_ascii() {
+                match ch {
+                    '~' | '!' | '@' | '#' | '$' | '%' | '^' | '&' | '*' | '(' | ')' | '{' | '}'
+                    | '|' | ':' | '"' | '<' | '>' | '?' | '[' | ']' | '\\' | ';' | '\'' | ','
+                    | '.' | '/' | '=' => None,
+                    'A'..='Z' => Some((ch as u8).to_ascii_lowercase() as char),
+                    ' ' => Some('-'),
+                    _ => Some(ch),
+                }
+            } else {
+                Some(ch)
+            };
+            if let Some(ch) = ch {
+                path.push(ch);
+            }
+            path
+        })
 }
 
 #[cfg(test)]
