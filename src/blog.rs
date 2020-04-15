@@ -8,9 +8,9 @@ fn valid_date(year: i64, month: i64, day: i64) -> bool {
     return match month {
         1 | 3 | 5 | 7 | 8 | 10 | 12 => (day <= 31 && day >= 1),
         4 | 6 | 9 | 11 => (day <= 30 && day >= 1),
-        2 => ((day <= if leap {29} else {28}) && (day >= 1)),
+        2 => ((day <= if leap { 29 } else { 28 }) && (day >= 1)),
         _ => false,
-    }
+    };
 }
 
 #[derive(Debug, Clone)]
@@ -25,7 +25,15 @@ pub struct Blog {
 }
 
 impl Blog {
-    pub fn new(year: i64, month: i64, day: i64, title: String, tags: Vec<TagHandle>, preview: String, content: String) -> Self {
+    pub fn new(
+        year: i64,
+        month: i64,
+        day: i64,
+        title: String,
+        tags: Vec<TagHandle>,
+        preview: String,
+        content: String,
+    ) -> Self {
         // This isn't a program for others, I would use it myself so I will panic whenever possible
         if !valid_date(year, month, day) {
             panic!("Blog's date is invalid!");

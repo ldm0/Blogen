@@ -1,32 +1,28 @@
 use comrak::{markdown_to_html, ComrakOptions};
 
-use std::collections::HashMap;          // to store HLF 
-use regex::Regex;                       // for code block extraction
+use regex::Regex;
+use std::collections::HashMap;
 
-// for code block highlighting
-use syntect::{html, parsing, highlighting, easy, util};
-use html::{append_highlighted_html_for_styled_line, IncludeBackground};
-use parsing::SyntaxSet;
-use highlighting::ThemeSet;
 use easy::HighlightLines;
-use util::LinesWithEndings;
+use highlighting::ThemeSet;
+use html::{append_highlighted_html_for_styled_line, IncludeBackground};
 use lazy_static::lazy_static;
+use parsing::SyntaxSet;
+use syntect::{easy, highlighting, html, parsing, util};
+use util::LinesWithEndings;
 
-use crate::blog_clusters::BlogClusters;         // for template filling
-// for code block unescaping, homepage template filling 
+use crate::blog_clusters::BlogClusters;
+use crate::hlf_parser::{parse, HlfLhs, HlfRhs, Symbol};
 use crate::shared::path_title;
-use crate::hlf_parser::{HlfLhs, HlfRhs, Symbol, parse};
 use crate::shared::HTMLTemplate;
-// use std::io;
 
-
-// 1. Retrives the blogs into cluster
+// 1. Retrieves the blogs into cluster
 // 2. Parse the template file into HLF
 // 3. Use the information in cluster to expand the HLF to get the webpage result
 // For each kind of webpages the expand rules are different and hard-coded. The
 // hard-coded rules could be wrote in files, which make this program data driven
-// (But it's difficult and not practicle because demand always ugly and hard to
-// be describled in a general way).
+// (But it's difficult and not practical because requirements are always ugly
+// and hard to be described in a general way).
 
 // Use a bnf-like thing is a fancier expression of html snippet provider
 // while symbol in content means this symbol can be repeated
@@ -35,43 +31,31 @@ const LATEX_MARK: &[u8; 9] = b"lAtExhERE";
 const LATEX_MARK_LEN: usize = LATEX_MARK.len();
 const LATEX_TAG_BEGIN: &[u8; 19] = br#"<div class="latex">"#;
 const LATEX_TAG_END: &[u8; 6] = b"</div>";
-const NEEDS_ESCAPE : [bool; 256] = [
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, true,  false, false, false, true,  true,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, true,  false, true,  false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
+const NEEDS_ESCAPE: [bool; 256] = [
+    false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, true, false, false, false, true, true,
+    false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, true, false, true, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false,
 ];
 
 // With markdown as input, this function returns content with latex replaced by
-// mark and array of latex extracted. Currently we don't need to distingiush
+// mark and array of latex extracted. Currently we don't need to distinguish
 // block latex and inline latex, the metadata is stored with the string, here we
 // kept the wrapping `$`, for inline latex number is `$` is 2, for block latex
 // it's 4. And the second problem is if we should use Vec<u8> rather than String
@@ -86,26 +70,26 @@ pub fn extract_latex(s: &str) -> (String, Vec<String>) {
     let mut state = 0;
 
     let mut ptr = 0;
-    /* Here is an automaton for latex extraction
+    /* Here is a simple automaton for latex extraction
      * State Transition Graph:
      * L: Line break: `\r`, `\n`
-     * $: Dollar sign 
+     * $: Dollar sign
      * o: Other chars
      * If `o` is not set for specific state, we can ensure any other chars won't change this state.
      * ```
      * +-+--$->+-+     +-+
      * |2|     |0|<-L--|5|
      * +-+--L->+-+     +-+
-     * A      A|AA      A 
-     * |      //||      | 
-     * |     // $\      o 
-     * o    L/   \L     | 
-     * |   //     \\    | 
-     * |  //       \\   | 
-     * | //         \\  | 
-     * ||$           \\ | 
-     * |||            \\| 
-     * ||V            ||| 
+     * A      A|AA      A
+     * |      //||      |
+     * |     // $\      o
+     * o    L/   \L     |
+     * |   //     \\    |
+     * |  //       \\   |
+     * | //         \\  |
+     * ||$           \\ |
+     * |||            \\|
+     * ||V            |||
      * +-+     +-+     +-+
      * |1|--$->|3|--$->|4|
      * +-+     +-+     +-+
@@ -114,7 +98,6 @@ pub fn extract_latex(s: &str) -> (String, Vec<String>) {
     for (i, &byte) in s.iter().enumerate() {
         match state {
             0 => {
-                // optimize to if at last
                 match byte {
                     b'$' => {
                         state = 1;
@@ -124,21 +107,17 @@ pub fn extract_latex(s: &str) -> (String, Vec<String>) {
                     _ => (),
                 }
             }
-            1 => {
-                match byte {
-                    b'$' => state = 3,
-                    b'\r' | b'\n' => state = 0,
-                    _ => state = 2,
-                }
-            }
+            1 => match byte {
+                b'$' => state = 3,
+                b'\r' | b'\n' => state = 0,
+                _ => state = 2,
+            },
             2 => {
                 match byte {
                     b'$' => {
                         state = 0;
                         new_s.extend(LATEX_MARK);
-                        latexes.push(unsafe {
-                            String::from_utf8_unchecked(s[ptr..=i].to_vec())
-                        });
+                        latexes.push(unsafe { String::from_utf8_unchecked(s[ptr..=i].to_vec()) });
                         ptr = i + 1;
                     }
                     // This is the error state, here we don't recover, instead
@@ -148,26 +127,20 @@ pub fn extract_latex(s: &str) -> (String, Vec<String>) {
                     _ => (),
                 }
             }
-            3 => {
-                match byte {
-                    b'$' => state = 4,
-                    _ => (),
+            3 => match byte {
+                b'$' => state = 4,
+                _ => (),
+            },
+            4 => match byte {
+                b'$' => {
+                    state = 0;
+                    new_s.extend(LATEX_MARK);
+                    latexes.push(unsafe { String::from_utf8_unchecked(s[ptr..=i].to_vec()) });
+                    ptr = i + 1;
                 }
-            }
-            4 => {
-                match byte {
-                    b'$' => {
-                        state = 0;
-                        new_s.extend(LATEX_MARK);
-                        latexes.push(unsafe {
-                            String::from_utf8_unchecked(s[ptr..=i].to_vec())
-                        });
-                        ptr = i + 1;
-                    }
-                    b'\r' | b'\n' => state = 0,
-                    _ => state = 5,
-                }
-            }
+                b'\r' | b'\n' => state = 0,
+                _ => state = 5,
+            },
             // 5 is the error state, we only want to meet a linebreak then we will forget the error
             5 => {
                 match byte {
@@ -176,7 +149,7 @@ pub fn extract_latex(s: &str) -> (String, Vec<String>) {
                     _ => (),
                 }
             }
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
     new_s.extend(&s[ptr..]);
@@ -194,7 +167,7 @@ pub fn insert_latex(s: &str, latexes: &Vec<String>) -> Option<String> {
     let mut i = 0;
     let i_max = s.len() - LATEX_MARK_LEN;
     while i < i_max {
-        if &s[i..i+LATEX_MARK_LEN] == LATEX_MARK {
+        if &s[i..i + LATEX_MARK_LEN] == LATEX_MARK {
             result.extend(&s[begin..i]);
             result.extend(LATEX_TAG_BEGIN);
             result.extend(html_escape(&latexes[latexes_iter]).as_bytes());
@@ -225,15 +198,15 @@ pub fn html_unescape(s: &str) -> String {
     let mut result = Vec::with_capacity(s_len);
     for (i, &ch) in s.iter().enumerate() {
         if ch == b'&' {
-            let (offset, ch) = if s.get(i+1..=i+5) == Some(b"quot;") {
+            let (offset, ch) = if s.get(i + 1..=i + 5) == Some(b"quot;") {
                 (6, b'"')
-            } else if s.get(i+1..=i+4) == Some(b"amp;") {
+            } else if s.get(i + 1..=i + 4) == Some(b"amp;") {
                 (5, b'&')
-            } else if s.get(i+1..=i+4) == Some(b"#39;") {
+            } else if s.get(i + 1..=i + 4) == Some(b"#39;") {
                 (5, b'\'')
-            } else if s.get(i+1..=i+3) == Some(b"lt;") {
+            } else if s.get(i + 1..=i + 3) == Some(b"lt;") {
                 (4, b'<')
-            } else if s.get(i+1..=i+3) == Some(b"gt;") {
+            } else if s.get(i + 1..=i + 3) == Some(b"gt;") {
                 (4, b'>')
             } else {
                 (0, 0)
@@ -273,7 +246,7 @@ pub fn html_escape(s: &str) -> String {
     unsafe { String::from_utf8_unchecked(result) }
 }
 
-// Transform serveral frequently used markdown code annotation to file extension
+// Transform several frequently used markdown code annotation to file extension
 pub fn lang2ext(lang: &str) -> &str {
     match lang {
         "cpp" | "c++" | "cxx" => "cpp",
@@ -292,8 +265,9 @@ pub fn highlight_code(lang: &str, code: &str) -> String {
         static ref THEME_SET: ThemeSet = ThemeSet::load_defaults();
     }
 
-    let syntax = SYNTAX_SET.find_syntax_by_extension(lang2ext(lang))
-                            .expect(&format!("Unknown language: {}!", lang));
+    let syntax = SYNTAX_SET
+        .find_syntax_by_extension(lang2ext(lang))
+        .expect(&format!("Unknown language: {}!", lang));
     let ref theme = THEME_SET.themes["base16-ocean.light"];
     let mut highlighter = HighlightLines::new(syntax, theme);
 
@@ -302,7 +276,11 @@ pub fn highlight_code(lang: &str, code: &str) -> String {
 
     for line in LinesWithEndings::from(&code_unesc) {
         let regions = highlighter.highlight(line, &SYNTAX_SET);
-        append_highlighted_html_for_styled_line(&regions, IncludeBackground::No, &mut code_highlight);
+        append_highlighted_html_for_styled_line(
+            &regions,
+            IncludeBackground::No,
+            &mut code_highlight,
+        );
     }
 
     code_highlight
@@ -322,21 +300,28 @@ impl HTMLTemplate for BlogTemplate {
         for i in hlfs_vec.iter() {
             hlfs.insert(i.lhs.clone(), i.rhs.clone());
         }
-        Ok(Self {
-            hlfs: hlfs,
-        })
+        Ok(Self { hlfs: hlfs })
     }
     fn fill(&self, cluster: &BlogClusters) -> Vec<(String, String)> {
         let mut results = Vec::new();
 
         // We have the knowledge of blog template's structure
-        let main_rhs = self.hlfs.get("main").expect("there should be a main symbol in blog template.");
+        let main_rhs = self
+            .hlfs
+            .get("main")
+            .expect("there should be a main symbol in blog template.");
         let tags_rhs = match main_rhs.get(1).unwrap() {
-            Symbol::N(x) => self.hlfs.get(x).expect(&format!("\"{}\" symbol not found.", x)),
+            Symbol::N(x) => self
+                .hlfs
+                .get(x)
+                .expect(&format!("\"{}\" symbol not found.", x)),
             _ => panic!(),
         };
         let tag_rhs = match tags_rhs.get(1).unwrap() {
-            Symbol::N(x) => self.hlfs.get(x).expect(&format!("\"{}\" symbol not found.", x)),
+            Symbol::N(x) => self
+                .hlfs
+                .get(x)
+                .expect(&format!("\"{}\" symbol not found.", x)),
             _ => panic!(),
         };
         assert_eq!(main_rhs.len(), 3);
@@ -349,7 +334,7 @@ impl HTMLTemplate for BlogTemplate {
             match main_rhs.get(0).unwrap() {
                 Symbol::T(x) => {
                     // 1. Markdown to html
-                    // 2. Retrieve code blocks in html. 
+                    // 2. Retrieve code blocks in html.
                     // 3. Do syntax highlighting on unescaped code blocks
                     //    according to code annotation. (code may contains
                     //    some characters will be escaped to fit into html)
@@ -372,19 +357,22 @@ impl HTMLTemplate for BlogTemplate {
                     };
                     let (content, latexes) = extract_latex(&blog.content);
                     let content = markdown_to_html(&content, &options);
-                    let raw_html = x.replace("_slot_of_blog_title", &blog.title)
-                                    .replace("_slot_of_blog_day", &blog.day.to_string())
-                                    .replace("_slot_of_blog_month", &blog.month.to_string())
-                                    .replace("_slot_of_blog_year", &blog.year.to_string())
-                                    .replace("_slot_of_blog_preview", &blog.preview)
-                                    .replace("_slot_of_blog_content", &content);
+                    let raw_html = x
+                        .replace("_slot_of_blog_title", &blog.title)
+                        .replace("_slot_of_blog_day", &blog.day.to_string())
+                        .replace("_slot_of_blog_month", &blog.month.to_string())
+                        .replace("_slot_of_blog_year", &blog.year.to_string())
+                        .replace("_slot_of_blog_preview", &blog.preview)
+                        .replace("_slot_of_blog_content", &content);
                     let raw_html = match insert_latex(&raw_html, &latexes) {
                         Some(x) => x,
-                        None => panic!("Latex insertion error!"),
+                        None => panic!("LaTeX insertion error!"),
                     };
-                    // Assume latex never overlaps with or contained by code. 
+                    // Assume latex never overlaps with or contained by code.
                     lazy_static! {
-                        static ref RE: Regex = Regex::new(r#"<pre lang="([^"]*)"><code>([^<]*)</code></pre>"#).unwrap();
+                        static ref RE: Regex =
+                            Regex::new(r#"<pre lang="([^"]*)"><code>([^<]*)</code></pre>"#)
+                                .unwrap();
                     }
                     let mut begin = 0;
                     for cap in RE.captures_iter(&raw_html) {
@@ -404,25 +392,25 @@ impl HTMLTemplate for BlogTemplate {
                     result.push_str(&raw_html[begin..]);
                 }
                 _ => panic!(),
-            }; 
+            };
             match tags_rhs.get(0).unwrap() {
                 Symbol::T(x) => result.push_str(x),
                 _ => panic!(),
-            }; 
+            };
             // add multiple tag names
             for tag_handle in blog.tags.iter() {
                 match tag_rhs.get(0).unwrap() {
                     Symbol::T(x) => {
                         let tag = cluster.get_tag(*tag_handle).unwrap();
                         result.push_str(&x.replace("_slot_of_tag_name", &tag.name));
-                    },
+                    }
                     _ => panic!(),
-                }; 
+                };
             }
             match tags_rhs.get(2).unwrap() {
                 Symbol::T(x) => result.push_str(x),
                 _ => panic!(),
-            }; 
+            };
             match main_rhs.get(2).unwrap() {
                 Symbol::T(x) => result.push_str(x),
                 _ => panic!(),
@@ -434,9 +422,8 @@ impl HTMLTemplate for BlogTemplate {
 }
 
 #[cfg(test)]
-mod template_tests{
+mod template_tests {
     use super::*;
-
 
     #[test]
     fn test_html_unescape() {
@@ -456,7 +443,7 @@ mod template_tests{
         assert_eq!(html_unescape("&quot;&lt"), "\"&lt");
         assert_eq!(html_unescape("&lt;&quot;&quot;&gt;"), "<\"\">");
     }
-    
+
     #[test]
     fn test_html_escape() {
         assert_eq!(html_escape("emm"), "emm");
@@ -498,13 +485,16 @@ mod template_tests{
             hi $I'm latex3$ alice hi $I'm latex4$ bob
         ";
         let (_, latexes) = extract_latex(s);
-        assert_eq!(latexes, [
-            "$I'm latex0$",
-            "$I'm latex1$",
-            "$I'm latex2$",
-            "$I'm latex3$",
-            "$I'm latex4$",
-        ]);
+        assert_eq!(
+            latexes,
+            [
+                "$I'm latex0$",
+                "$I'm latex1$",
+                "$I'm latex2$",
+                "$I'm latex3$",
+                "$I'm latex4$",
+            ]
+        );
     }
 
     #[test]
@@ -518,48 +508,70 @@ mod template_tests{
             hi $$I'm latex3$$ alice hi $$I'm latex4$$ bob
         ";
         let (_, latexes) = extract_latex(s);
-        assert_eq!(latexes, [
-            "$$I'm latex0$$",
-            "$$I'm latex1 bob
+        assert_eq!(
+            latexes,
+            [
+                "$$I'm latex0$$",
+                "$$I'm latex1 bob
             hahah$$",
-            "$$I'm latex2$$",
-            "$$I'm latex3$$",
-            "$$I'm latex4$$",
-        ]);
+                "$$I'm latex2$$",
+                "$$I'm latex3$$",
+                "$$I'm latex4$$",
+            ]
+        );
     }
-
 
     #[test]
     fn test_inline_latex_insertion() {
-        let mark: &str = unsafe {
-            &String::from_utf8_unchecked(LATEX_MARK.to_vec())
-        };
-        let begin: &str = unsafe {
-            &String::from_utf8_unchecked(LATEX_TAG_BEGIN.to_vec())
-        };
-        let end: &str = unsafe {
-            &String::from_utf8_unchecked(LATEX_TAG_END.to_vec())
-        };
+        let mark: &str = unsafe { &String::from_utf8_unchecked(LATEX_MARK.to_vec()) };
+        let begin: &str = unsafe { &String::from_utf8_unchecked(LATEX_TAG_BEGIN.to_vec()) };
+        let end: &str = unsafe { &String::from_utf8_unchecked(LATEX_TAG_END.to_vec()) };
         let s = ["a", mark, "b", mark, "c"].join("");
         let latexes = vec![String::from("$Alice$"), String::from("$Bob$")];
         let s = insert_latex(&s, &latexes);
-        assert_eq!(s, Some(["a", begin, &latexes[0], end, "b", begin, &latexes[1], end, "c"].join("")));
+        assert_eq!(
+            s,
+            Some(
+                [
+                    "a",
+                    begin,
+                    &latexes[0],
+                    end,
+                    "b",
+                    begin,
+                    &latexes[1],
+                    end,
+                    "c"
+                ]
+                .join("")
+            )
+        );
     }
 
     #[test]
     fn test_block_latex_insertion() {
-        let mark: &str = unsafe {
-            &String::from_utf8_unchecked(LATEX_MARK.to_vec())
-        };
-        let begin: &str = unsafe {
-            &String::from_utf8_unchecked(LATEX_TAG_BEGIN.to_vec())
-        };
-        let end: &str = unsafe {
-            &String::from_utf8_unchecked(LATEX_TAG_END.to_vec())
-        };
+        let mark: &str = unsafe { &String::from_utf8_unchecked(LATEX_MARK.to_vec()) };
+        let begin: &str = unsafe { &String::from_utf8_unchecked(LATEX_TAG_BEGIN.to_vec()) };
+        let end: &str = unsafe { &String::from_utf8_unchecked(LATEX_TAG_END.to_vec()) };
         let s = ["a", mark, "b", mark, "c"].join("");
         let latexes = vec![String::from("$$Ali\nce$$"), String::from("$$Bob$$")];
         let s = insert_latex(&s, &latexes);
-        assert_eq!(s, Some(["a", begin, &latexes[0], end, "b", begin, &latexes[1], end, "c"].join("")));
+        assert_eq!(
+            s,
+            Some(
+                [
+                    "a",
+                    begin,
+                    &latexes[0],
+                    end,
+                    "b",
+                    begin,
+                    &latexes[1],
+                    end,
+                    "c"
+                ]
+                .join("")
+            )
+        );
     }
 }

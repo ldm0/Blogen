@@ -182,7 +182,7 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
                         }
                     }
                 } else {
-                    // ignore 
+                    // ignore
                     if let None = input.next() {
                         return None;
                     }
@@ -190,7 +190,7 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
             }
             // Get left side and in symbol
             (false, _, true) => {
-                if let Some((it, typ)) = match_type(input.clone()){
+                if let Some((it, typ)) = match_type(input.clone()) {
                     match typ {
                         HlfType::Symbol => {
                             input = it;
@@ -238,7 +238,6 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
     }
 }
 
-
 #[cfg(test)]
 mod hlf_parser_tests {
     use super::*;
@@ -278,12 +277,12 @@ mod hlf_parser_tests {
         macro_rules! can_match_begin {
             ($input: expr) => {
                 assert!(!is_none!(match_type_begin($input.chars())));
-            }
+            };
         }
         macro_rules! cannot_match_begin {
             ($input: expr) => {
                 assert!(is_none!(match_type_begin($input.chars())));
-            }
+            };
         }
         can_match_begin!("<!--");
         can_match_begin!("<!----");
@@ -297,12 +296,12 @@ mod hlf_parser_tests {
         macro_rules! can_match_end {
             ($input: expr) => {
                 assert!(!is_none!(match_type_end($input.chars())));
-            }
+            };
         }
         macro_rules! cannot_match_end {
             ($input: expr) => {
                 assert!(is_none!(match_type_end($input.chars())));
-            }
+            };
         }
         can_match_end!("-->");
         can_match_end!("-->--");
@@ -342,7 +341,10 @@ mod hlf_parser_tests {
         assert_eq!(result.len(), 1);
         let result: &HLF = &result[0];
         assert_eq!(result.lhs, String::from("this is the symbol"));
-        assert_eq!(result.rhs, vec![Symbol::T(String::from("this is the content"))]);
+        assert_eq!(
+            result.rhs,
+            vec![Symbol::T(String::from("this is the content"))]
+        );
     }
 
     #[test]
@@ -353,7 +355,10 @@ mod hlf_parser_tests {
         assert_eq!(result.len(), 1);
         let result: &HLF = &result[0];
         assert_eq!(result.lhs, String::from("this is the symbol"));
-        assert_eq!(result.rhs, vec![Symbol::T(String::from("this is the content"))]);
+        assert_eq!(
+            result.rhs,
+            vec![Symbol::T(String::from("this is the content"))]
+        );
     }
 
     #[test]
@@ -363,7 +368,10 @@ mod hlf_parser_tests {
         assert_eq!(result.len(), 1);
         let result: &HLF = &result[0];
         assert_eq!(result.lhs, String::from("symbol_name_with_padding"));
-        assert_eq!(result.rhs, vec![Symbol::T(String::from(" content with padding "))]);
+        assert_eq!(
+            result.rhs,
+            vec![Symbol::T(String::from(" content with padding "))]
+        );
     }
 
     #[test]

@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use crate::shared::{HTMLTemplate, path_title};
-use crate::hlf_parser::{HlfLhs, HlfRhs, Symbol, parse};
 use crate::blog_clusters::BlogClusters;
-use crate::tag::Tag;                            // for template filling
+use crate::hlf_parser::{parse, HlfLhs, HlfRhs, Symbol};
+use crate::shared::{path_title, HTMLTemplate};
+use crate::tag::Tag; // for template filling
 
 pub struct HomepageTemplate {
     hlfs: HashMap<HlfLhs, HlfRhs>,
@@ -19,9 +19,7 @@ impl HTMLTemplate for HomepageTemplate {
         for i in hlfs_vec.iter() {
             hlfs.insert(i.lhs.clone(), i.rhs.clone());
         }
-        Ok(Self {
-            hlfs: hlfs,
-        })
+        Ok(Self { hlfs: hlfs })
     }
     fn fill(&self, cluster: &BlogClusters) -> Vec<(String, String)> {
         let mut result = String::new();
@@ -42,21 +40,27 @@ impl HTMLTemplate for HomepageTemplate {
         match main.get(0).unwrap() {
             Symbol::T(x) => result.push_str(x),
             _ => panic!(),
-        }; 
+        };
 
         let blogs = cluster.get_blogs();
         for blog in blogs {
             match blog_chunk_rhs.get(0).unwrap() {
-                Symbol::T(x) => result.push_str(&x.replace("_slot_of_blog_path", &(path_title(&blog.title) + ".html"))
-                                                  .replace("_slot_of_blog_title", &blog.title)
-                                                  .replace("_slot_of_blog_preview", &blog.preview)),
+                Symbol::T(x) => result.push_str(
+                    &x.replace("_slot_of_blog_path", &(path_title(&blog.title) + ".html"))
+                        .replace("_slot_of_blog_title", &blog.title)
+                        .replace("_slot_of_blog_preview", &blog.preview),
+                ),
                 _ => panic!(),
-            } 
+            }
             match tags_rhs.get(0).unwrap() {
                 Symbol::T(x) => result.push_str(x),
                 _ => panic!(),
-            } 
-            let tags: Vec<&Tag> = blog.tags.iter().map(|x| cluster.get_tag(*x).unwrap()).collect();
+            }
+            let tags: Vec<&Tag> = blog
+                .tags
+                .iter()
+                .map(|x| cluster.get_tag(*x).unwrap())
+                .collect();
             for tag in tags {
                 match tag_rhs.get(0).unwrap() {
                     Symbol::T(x) => result.push_str(&x.replace("_slot_of_tag_name", &tag.name)),
@@ -66,18 +70,17 @@ impl HTMLTemplate for HomepageTemplate {
             match tags_rhs.get(2).unwrap() {
                 Symbol::T(x) => result.push_str(x),
                 _ => panic!(),
-            } 
+            }
             match blog_chunk_rhs.get(2).unwrap() {
                 Symbol::T(x) => result.push_str(x),
                 _ => panic!(),
-            } 
+            }
         }
         match main.get(2).unwrap() {
             Symbol::T(x) => result.push_str(x),
             _ => panic!(),
-        } 
+        }
 
         vec![("index.html".to_string(), result)]
     }
 }
-

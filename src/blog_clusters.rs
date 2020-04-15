@@ -1,10 +1,10 @@
-use std::collections::HashMap;
-use crate::tag::Tag;
 use crate::blog::Blog;
 use crate::shared::path_title;
+use crate::tag::Tag;
+use std::collections::HashMap;
 
-use std::string::String;
 use std::str;
+use std::string::String;
 
 // Currently just index of a blog or tag in vector
 pub type BlogHandle = usize;
@@ -22,10 +22,10 @@ fn time_squash<T: Into<u64>>(year: T, month: T, day: T) -> u64 {
 
 pub struct BlogClusters {
     //blog_map: HashMap<String, BlogHandle>,              // currently not used
-    tag_map: HashMap<String, TagHandle>,                // map tag name to index of tag in tag vector
-    tags: Vec<Tag>,                                     // Follow the order of tags in tag file
-    blogs: Vec<Blog>,                                   // Follow the order of blog creation date
-    tag_blog_map: HashMap<TagHandle, Vec<BlogHandle>>,  // map tag handle to handles of blog referencing it
+    tag_map: HashMap<String, TagHandle>, // map tag name to index of tag in tag vector
+    tags: Vec<Tag>,                      // Follow the order of tags in tag file
+    blogs: Vec<Blog>,                    // Follow the order of blog creation date
+    tag_blog_map: HashMap<TagHandle, Vec<BlogHandle>>, // map tag handle to handles of blog referencing it
 }
 
 impl BlogClusters {
@@ -39,7 +39,7 @@ impl BlogClusters {
     }
 
     // used when parse tag file
-    // return if add successfully 
+    // return if add successfully
     // when tag_name is present, description is not updated
     fn add_tag(&mut self, tag_name: String, tag_desc: String) -> Option<TagHandle> {
         if self.tag_map.contains_key(&tag_name) {
@@ -71,9 +71,7 @@ impl BlogClusters {
     pub fn add_tags(&mut self, tags_raw: &str) {
         let mut name_found = false;
         let mut tag_name = String::new();
-        let lines: Vec<&str> = tags_raw.lines()
-                                    .map(|x| x.trim())
-                                    .collect();
+        let lines: Vec<&str> = tags_raw.lines().map(|x| x.trim()).collect();
         for line in lines {
             if !line.is_empty() {
                 let line = line.to_string();
@@ -109,32 +107,39 @@ impl BlogClusters {
             // We need to ensure title in content is roughly the same as file
             // name. The path_title is only used for validation, the title
             // stored is unprocessed.
-            assert_eq!(&path_title(title), &path_title(blog_path_title), "Incorrespondence between filename and title");
+            assert_eq!(
+                &path_title(title),
+                &path_title(blog_path_title),
+                "Incorrespondence between filename and title"
+            );
 
             // Second line is time: `2000 / 9 / 27`
-            let time = line_it.next()
-                              .unwrap()
-                              .split('/')
-                              .map(|x| x.trim().parse().expect("Invalid time."))
-                              .collect::<Vec<i64>>();
+            let time = line_it
+                .next()
+                .unwrap()
+                .split('/')
+                .map(|x| x.trim().parse().expect("Invalid time."))
+                .collect::<Vec<i64>>();
 
             assert_eq!(3, time.len(), "Invalid time format.");
 
             // Third line is tags: `aaa | bbb | ccc | ...`
-            let tag_names = line_it.next()
-                                   .unwrap()
-                                   .split('|')
-                                   .map(|x| x.trim())   // permits arbitrary spaces between time and seperator
-                                   .collect::<Vec<&str>>();
-            let tag_handles = tag_names.into_iter()
-                                       .map(|x| *self.get_tag_handle(x).expect("Invalid tag name."))
-                                       .collect::<Vec<TagHandle>>();
+            let tag_names = line_it
+                .next()
+                .unwrap()
+                .split('|')
+                .map(|x| x.trim()) // permits arbitrary spaces between time and seperator
+                .collect::<Vec<&str>>();
+            let tag_handles = tag_names
+                .into_iter()
+                .map(|x| *self.get_tag_handle(x).expect("Invalid tag name."))
+                .collect::<Vec<TagHandle>>();
 
             // Assme there is no "---" in article content.
             // Emmm.... This is not a legit assumption, we can change it later
             let mut parts = blog.split("---");
 
-            // Assume there always three parts: 
+            // Assume there always three parts:
             // Meta Data
             // ---
             // Preview
@@ -149,32 +154,33 @@ impl BlogClusters {
             // Get the content part
             let content = parts.next().expect("Where is the content?").trim();
 
-            self.blogs.push(
-                Blog::new(
-                    time[0],
-                    time[1],
-                    time[2],
-                    title.to_string(),
-                    tag_handles.clone(),
-                    preview.to_string(),
-                    content.to_string()
-                )
-            );
+            self.blogs.push(Blog::new(
+                time[0],
+                time[1],
+                time[2],
+                title.to_string(),
+                tag_handles.clone(),
+                preview.to_string(),
+                content.to_string(),
+            ));
         }
 
         // Sort blog vector by time, from new to old
-        self.blogs.sort_by(|a, b| time_squash(b.year, b.month, b.day).cmp(&time_squash(a.year, a.month, a.day)));
+        self.blogs.sort_by(|a, b| {
+            time_squash(b.year, b.month, b.day).cmp(&time_squash(a.year, a.month, a.day))
+        });
 
         // Map tag_handle-blog_handle pair
         for (i, blog) in self.blogs.iter().enumerate() {
-            // Gen handle of current blog(just the index) 
+            // Gen handle of current blog(just the index)
             let blog_handle = i;
 
             for tag_handle in &blog.tags {
                 // We know this tag_handle is always valid
-                self.tag_blog_map.get_mut(&tag_handle)
-                                 .unwrap()
-                                 .push(blog_handle);
+                self.tag_blog_map
+                    .get_mut(&tag_handle)
+                    .unwrap()
+                    .push(blog_handle);
             }
         }
     }
@@ -191,7 +197,7 @@ impl BlogClusters {
         &self.tags
     }
 
-    pub fn get_blogs(&self) -> &Vec<Blog>{
+    pub fn get_blogs(&self) -> &Vec<Blog> {
         &self.blogs
     }
 
@@ -231,7 +237,8 @@ mod blog_cluster_tests {
             be geek about hardware and software
 
             proramming
-            programming techniques");
+            programming techniques",
+        );
         assert_eq!(5, clusters.num_tag());
     }
 
@@ -239,12 +246,14 @@ mod blog_cluster_tests {
     #[should_panic]
     fn test_tag_duplication() {
         let mut clusters = BlogClusters::new();
-        clusters.add_tags("
+        clusters.add_tags(
+            "
             life
             things about current life
             life
             things about current life
-        ");
+        ",
+        );
     }
 
     #[test]
@@ -258,20 +267,21 @@ mod blog_cluster_tests {
             about my works
 
             fun
-            maybe some gameplay");
-            
-        clusters.add_blogs(&vec![
-            (
-                "test-blog".to_string(),
-                "Test Blog
+            maybe some gameplay",
+        );
+
+        clusters.add_blogs(&vec![(
+            "test-blog".to_string(),
+            "Test Blog
                 2000/9/27
                 life | work | fun
                 ---
                 lolololololol
                 ---
                 ololololololo
-                ".to_string())
-        ]);
+                "
+            .to_string(),
+        )]);
         let blogs = clusters.get_blogs();
         assert_eq!(blogs.len(), 1);
         let blog = &blogs[0];
