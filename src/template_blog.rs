@@ -185,7 +185,7 @@ pub fn html_unescape<T: AsRef<str>>(s: T) -> String {
             // unescape process
             ESCAPE_TABLE
                 .iter()
-                .filter_map(|(before, after)| {
+                .find_map(|(before, after)| {
                     s.get(i..i + before.len()).and_then(|range| {
                         if &range == before {
                             Some((before.len(), after))
@@ -194,7 +194,6 @@ pub fn html_unescape<T: AsRef<str>>(s: T) -> String {
                         }
                     })
                 })
-                .next()
                 .map(|(offset, after)| {
                     result.extend(&s[begin..i]);
                     result.push(*after);
@@ -217,7 +216,7 @@ pub fn html_escape<T: AsRef<str>>(s: T) -> String {
         |(mut begin, mut result), (i, byte)| {
             ESCAPE_TABLE
                 .iter()
-                .filter_map(
+                .find_map(
                     |(before, after)| {
                         if byte == after {
                             Some(before)
@@ -226,7 +225,6 @@ pub fn html_escape<T: AsRef<str>>(s: T) -> String {
                         }
                     },
                 )
-                .next()
                 .map(|&before| {
                     result.extend(&s[begin..i]);
                     result.extend(before);
