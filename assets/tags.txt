@@ -1,3 +1,6 @@
+GSoC
+Google Summer of Code
+
 Rust
 I am a rustcean!
 
