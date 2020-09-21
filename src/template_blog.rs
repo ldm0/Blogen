@@ -3,7 +3,7 @@ use comrak::{markdown_to_html, ComrakOptions};
 use regex::Regex;
 use std::collections::HashMap;
 
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use syntect::{
     easy::HighlightLines,
     highlighting::ThemeSet,
@@ -250,10 +250,8 @@ pub fn lang2ext(lang: &str) -> &str {
 }
 
 pub fn highlight_code(lang: &str, code: &str) -> String {
-    lazy_static! {
-        static ref SYNTAX_SET: SyntaxSet = SyntaxSet::load_defaults_newlines();
-        static ref THEME_SET: ThemeSet = ThemeSet::load_defaults();
-    }
+    static SYNTAX_SET: Lazy<SyntaxSet> = Lazy::new(|| SyntaxSet::load_defaults_newlines());
+    static THEME_SET: Lazy<ThemeSet> = Lazy::new(|| ThemeSet::load_defaults());
 
     let syntax = SYNTAX_SET
         .find_syntax_by_extension(lang2ext(lang))
@@ -360,11 +358,9 @@ impl HTMLTemplate for BlogTemplate {
                         None => panic!("LaTeX insertion error!"),
                     };
                     // Assume latex never overlaps with or contained by code.
-                    lazy_static! {
-                        static ref RE: Regex =
-                            Regex::new(r#"<pre lang="([^"]*)"><code>([^<]*)</code></pre>"#)
-                                .unwrap();
-                    }
+                    static RE: Lazy<Regex> = Lazy::new(|| {
+                        Regex::new(r#"<pre lang="([^"]*)"><code>([^<]*)</code></pre>"#).unwrap()
+                    });
                     let mut begin = 0;
                     for cap in RE.captures_iter(&raw_html) {
                         let lang = cap.get(1).unwrap().as_str();
@@ -373,11 +369,11 @@ impl HTMLTemplate for BlogTemplate {
                         let range = cap.get(0).unwrap().range();
                         let end = range.start;
                         result.push_str(&raw_html[begin..end]);
-                        result.push_str(&r#"<pre lang=""#);
+                        result.push_str(r#"<pre lang=""#);
                         result.push_str(lang);
-                        result.push_str(&r#""><code>"#);
+                        result.push_str(r#""><code>"#);
                         result.push_str(code_highlight);
-                        result.push_str(&r#"</code></pre>"#);
+                        result.push_str(r#"</code></pre>"#);
                         begin = range.end;
                     }
                     result.push_str(&raw_html[begin..]);

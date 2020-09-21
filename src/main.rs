@@ -12,7 +12,6 @@ mod template_cluster;
 mod template_homepage;
 
 use blog_clusters::BlogClusters;
-use lazy_static::lazy_static;
 use shared::HTMLTemplate;
 use template_blog::BlogTemplate;
 use template_cluster::ClusterTemplate;
