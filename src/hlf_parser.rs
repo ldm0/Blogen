@@ -71,12 +71,9 @@ fn match_type_end<'a>(input: Chars<'a>) -> Option<Chars<'a>> {
 // Return matched type like symbol and content
 fn match_type<'a>(mut input_it: Chars<'a>) -> Option<(Chars<'a>, HlfType)> {
     let mut enclose = String::new();
-    if let Some(it) = match_type_begin(input_it.clone()) {
-        input_it = it;
-    } else {
-        return None;
-    }
+    input_it = match_type_begin(input_it.clone())?;
     loop {
+        // Try matching end, if failed, appending enclosed word.
         if let Some(it) = match_type_end(input_it.clone()) {
             input_it = it;
             return match enclose.trim() {
@@ -85,10 +82,7 @@ fn match_type<'a>(mut input_it: Chars<'a>) -> Option<(Chars<'a>, HlfType)> {
                 _ => None,
             };
         } else {
-            match input_it.next() {
-                Some(x) => enclose.push(x),
-                None => return None,
-            }
+            enclose.push(input_it.next()?);
         }
     }
 }
