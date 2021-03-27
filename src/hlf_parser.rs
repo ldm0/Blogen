@@ -1,14 +1,15 @@
-/*
-Design:
-Use comment chunk of html for convenient HLF preview
-
-<!--symbol-->main<!--symbol-->
-<!--content-->content<!--content-->
-
-document := symbol content document | epsilon
-content := content symbol content | epsilon
-*/
-// This parser is strict, it will throw error whenever possible.
+//! HTML LDM0 form XD
+//! This parser is strict, it will throw error whenever possible.
+//!
+//! Design:
+//! Use comment chunk of html for convenient HLF preview.
+//! ```txt
+//! <!--symbol-->main<!--symbol-->
+//! <!--content-->content<!--content-->
+//! 
+//! document := symbol content document | epsilon
+//! content := content symbol content | epsilon
+//! ```txt
 
 use std::str::Chars;
 
@@ -42,23 +43,18 @@ enum HlfType {
     Content,
 }
 
-// Check if input prefixs with pattern
-// Return end position
+/// Check if input is prefixed by pattern
+/// Return end position
 fn match_str<'a, 'b>(mut input: Chars<'a>, mut pattern: Chars<'b>) -> Option<Chars<'a>> {
     loop {
         let patternch = match pattern.next() {
             Some(x) => x,
-            None => break,
+            None => return Some(input),
         };
-        if let Some(inputch) = input.next() {
-            if inputch != patternch {
-                return None;
-            }
-        } else {
+        if input.next()? != patternch {
             return None;
         }
     }
-    Some(input)
 }
 
 fn match_type_begin<'a>(input: Chars<'a>) -> Option<Chars<'a>> {
