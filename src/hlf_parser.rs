@@ -6,7 +6,7 @@
 //! ```txt
 //! <!--symbol-->main<!--symbol-->
 //! <!--content-->content<!--content-->
-//! 
+//!
 //! document := symbol content document | epsilon
 //! content := content symbol content | epsilon
 //! ```txt
@@ -43,17 +43,18 @@ enum HlfType {
     Content,
 }
 
-/// Check if input is prefixed by pattern
-/// Return end position
+/// Check if the input is prefixed by providing pattern. Return
+/// `Some(end_position)` if success.
 fn match_str<'a, 'b>(mut input: Chars<'a>, mut pattern: Chars<'b>) -> Option<Chars<'a>> {
     loop {
-        let patternch = match pattern.next() {
-            Some(x) => x,
+        match pattern.next() {
+            Some(x) => {
+                if input.next()? != x {
+                    return None;
+                }
+            }
             None => return Some(input),
         };
-        if input.next()? != patternch {
-            return None;
-        }
     }
 }
 
