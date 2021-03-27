@@ -241,25 +241,17 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
 #[cfg(test)]
 mod hlf_parser_tests {
     use super::*;
-    macro_rules! is_none {
-        ($option: expr) => {
-            match $option {
-                Some(_) => false,
-                None => true,
-            }
-        };
-    }
 
     #[test]
     fn test_match_str() {
         macro_rules! can_match {
             ($input: expr, $pattern: expr) => {
-                assert!(!is_none!(match_str($input.chars(), $pattern.chars())));
+                assert!(match_str($input.chars(), $pattern.chars()).is_some());
             };
         }
         macro_rules! cannot_match {
             ($input: expr, $pattern: expr) => {
-                assert!(is_none!(match_str($input.chars(), $pattern.chars())));
+                assert!(match_str($input.chars(), $pattern.chars()).is_none());
             };
         }
         can_match!("a", "a");
@@ -276,12 +268,12 @@ mod hlf_parser_tests {
     fn test_match_type_begin() {
         macro_rules! can_match_begin {
             ($input: expr) => {
-                assert!(!is_none!(match_type_begin($input.chars())));
+                assert!(match_type_begin($input.chars()).is_some());
             };
         }
         macro_rules! cannot_match_begin {
             ($input: expr) => {
-                assert!(is_none!(match_type_begin($input.chars())));
+                assert!(match_type_begin($input.chars()).is_none());
             };
         }
         can_match_begin!("<!--");
@@ -295,12 +287,12 @@ mod hlf_parser_tests {
     fn test_match_type_end() {
         macro_rules! can_match_end {
             ($input: expr) => {
-                assert!(!is_none!(match_type_end($input.chars())));
+                assert!(match_type_end($input.chars()).is_some());
             };
         }
         macro_rules! cannot_match_end {
             ($input: expr) => {
-                assert!(is_none!(match_type_end($input.chars())));
+                assert!(match_type_end($input.chars()).is_none());
             };
         }
         can_match_end!("-->");
