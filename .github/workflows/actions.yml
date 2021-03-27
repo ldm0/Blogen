@@ -4,10 +4,27 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: "Build"
-      run: cargo build --verbose
-    - name: "Test"
-      run: cargo test --verbose
-    - name: "Run"
-      run: cargo run
+      - uses: actions/checkout@v1
+      # Using this since it's used by clang-sys's CI
+      - name: Install LLVM and Clang
+        uses: KyleMayes/install-llvm-action@v1
+        with:
+          version: "10.0"
+          directory: ${{ github.workspace }}/clang
+      - name: "Build"
+        env:
+          LIBCLANG_PATH: ${{ github.workspace }}/clang/lib
+          LLVM_CONFIG_PATH: ${{ github.workspace }}/clang/bin/llvm-config
+        run: cargo build --verbose
+
+      - name: "Test"
+        env:
+          LIBCLANG_PATH: ${{ github.workspace }}/clang/lib
+          LLVM_CONFIG_PATH: ${{ github.workspace }}/clang/bin/llvm-config
+        run: cargo test --verbose
+
+      - name: "Run"
+        env:
+          LIBCLANG_PATH: ${{ github.workspace }}/clang/lib
+          LLVM_CONFIG_PATH: ${{ github.workspace }}/clang/bin/llvm-config
+        run: cargo run
