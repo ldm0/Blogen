@@ -122,10 +122,7 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
                         }
                     }
                 } else {
-                    match input.next() {
-                        Some(ch) => tmp_str.push(ch),
-                        None => return None,
-                    }
+                    tmp_str.push(input.next()?);
                 }
             }
             // Get right side and in content's non-symbol part
@@ -152,11 +149,8 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
                         }
                     }
                 } else {
-                    match input.next() {
-                        // append to content
-                        Some(ch) => tmp_str.push(ch),
-                        None => return None,
-                    }
+                    // append to content
+                    tmp_str.push(input.next()?);
                 }
             }
             // Get right side and not in content
@@ -173,10 +167,8 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
                         }
                     }
                 } else {
-                    // ignore
-                    if let None = input.next() {
-                        return None;
-                    }
+                    // ignore the char
+                    input.next()?;
                 }
             }
             // Get left side and in symbol
@@ -198,10 +190,7 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
                     }
                 } else {
                     // append symbol
-                    match input.next() {
-                        Some(ch) => tmp_str.push(ch),
-                        None => return None,
-                    }
+                    tmp_str.push(input.next()?);
                 }
             }
             // Get left side and not in symbol
@@ -220,7 +209,7 @@ pub fn parse(input: &str) -> Option<Vec<HLF>> {
                     }
                 } else {
                     // ignore
-                    if let None = input.next() {
+                    if input.next().is_none() {
                         return Some(result);
                     }
                 }
