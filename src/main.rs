@@ -1,4 +1,3 @@
-#![feature(or_patterns)]
 mod blog;
 mod blog_clusters;
 mod hlf_parser;
@@ -101,14 +100,14 @@ fn main() {
         let path = output_path.clone() + &file_name;
         match fs::write(&path, file_content) {
             Ok(_) => println!("Output to \"{}\" ok.", &path),
-            Err(err) => panic!(format!("Write to \"{}\" failed: {}.", &path, err)),
+            Err(err) => panic!("Write to \"{}\" failed: {}.", &path, err),
         }
     }
     for (file_name, file_content) in homepage_html_result {
         let path = output_path.clone() + &file_name;
         match fs::write(&path, file_content) {
             Ok(_) => println!("Output to \"{}\" ok.", &path),
-            Err(err) => panic!(format!("Write to \"{}\" failed: {}.", &path, err)),
+            Err(err) => panic!("Write to \"{}\" failed: {}.", &path, err),
         }
     }
 }
