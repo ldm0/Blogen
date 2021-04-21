@@ -35,6 +35,9 @@ I love using math tools to solve problems.
 Graphic
 Computer Graphics techniques.
 
+Unicode
+The babel!
+
 Programming
 Programming skills and knowledge.
 
