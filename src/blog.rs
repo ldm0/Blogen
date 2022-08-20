@@ -6,9 +6,9 @@ fn valid_date(year: i64, month: i64, day: i64) -> bool {
     }
     let leap = (((year % 4) == 0) && (year % 100 != 0)) || ((year % 400) == 0);
     return match month {
-        1 | 3 | 5 | 7 | 8 | 10 | 12 => (day <= 31 && day >= 1),
-        4 | 6 | 9 | 11 => (day <= 30 && day >= 1),
-        2 => ((day <= if leap { 29 } else { 28 }) && (day >= 1)),
+        1 | 3 | 5 | 7 | 8 | 10 | 12 => day <= 31 && day >= 1,
+        4 | 6 | 9 | 11 => day <= 30 && day >= 1,
+        2 => (day <= if leap { 29 } else { 28 }) && (day >= 1),
         _ => false,
     };
 }

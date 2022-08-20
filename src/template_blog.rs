@@ -1,9 +1,7 @@
 use comrak::{markdown_to_html, ComrakOptions};
-
 use regex::Regex;
 use std::collections::HashMap;
-
-use std::lazy::SyncLazy;
+use once_cell::sync::Lazy;
 use syntect::{
     easy::HighlightLines,
     highlighting::ThemeSet,
@@ -250,8 +248,8 @@ pub fn lang2ext(lang: &str) -> &str {
 }
 
 pub fn highlight_code(lang: &str, code: &str) -> String {
-    static SYNTAX_SET: SyncLazy<SyntaxSet> = SyncLazy::new(|| SyntaxSet::load_defaults_newlines());
-    static THEME_SET: SyncLazy<ThemeSet> = SyncLazy::new(|| ThemeSet::load_defaults());
+    static SYNTAX_SET: Lazy<SyntaxSet> = Lazy::new(|| SyntaxSet::load_defaults_newlines());
+    static THEME_SET: Lazy<ThemeSet> = Lazy::new(|| ThemeSet::load_defaults());
 
     let syntax = SYNTAX_SET
         .find_syntax_by_extension(lang2ext(lang))
@@ -358,7 +356,7 @@ impl HTMLTemplate for BlogTemplate {
                         None => panic!("LaTeX insertion error!"),
                     };
                     // Assume latex never overlaps with or contained by code.
-                    static RE: SyncLazy<Regex> = SyncLazy::new(|| {
+                    static RE: Lazy<Regex> = Lazy::new(|| {
                         Regex::new(r#"<pre lang="([^"]*)"><code>([^<]*)</code></pre>"#).unwrap()
                     });
                     let mut begin = 0;

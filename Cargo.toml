@@ -1,5 +1,5 @@
 [package]
-name = "generator"
+name = "blogen"
 version = "0.1.0"
 authors = ["Donough Liu <ldm2993593805@163.com>"]
 edition = "2018"
@@ -9,5 +9,6 @@ edition = "2018"
 [dependencies]
 comrak = "0.6.2"
 dotenv = "0.15.0"
+once_cell = { version = "1.13.1", features = ["parking_lot"] }
 regex = "1.4.5"
 syntect = "4.5.0"

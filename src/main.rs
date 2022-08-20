@@ -1,4 +1,3 @@
-#![feature(once_cell)]
 mod blog;
 mod blog_clusters;
 mod hlf_parser;
