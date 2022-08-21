@@ -11,4 +11,4 @@ comrak = "0.14.0"
 dotenv = "0.15.0"
 once_cell = { version = "1.13.1", features = ["parking_lot"] }
 regex = "1.4.5"
-syntect = "4.5.0"
+syntect = "5.0.0"
