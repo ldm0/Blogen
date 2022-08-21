@@ -1,7 +1,7 @@
-use comrak::{markdown_to_html, ComrakOptions};
+use comrak::{markdown_to_html, ComrakExtensionOptions, ComrakOptions, ComrakRenderOptions};
+use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashMap;
-use once_cell::sync::Lazy;
 use syntect::{
     easy::HighlightLines,
     highlighting::ThemeSet,
@@ -336,10 +336,16 @@ impl HTMLTemplate for BlogTemplate {
 
                     let options = ComrakOptions {
                         // Enable frequently used github markdown extensions
-                        github_pre_lang: true,
-                        ext_strikethrough: true,
-                        ext_table: true,
-                        ext_tasklist: true,
+                        extension: ComrakExtensionOptions {
+                            tasklist: true,
+                            table: true,
+                            strikethrough: true,
+                            ..Default::default()
+                        },
+                        render: ComrakRenderOptions {
+                            github_pre_lang: true,
+                            ..Default::default()
+                        },
                         ..Default::default()
                     };
                     let (content, latexes) = extract_latex(&blog.content);
